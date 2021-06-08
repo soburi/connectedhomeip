@@ -124,33 +124,9 @@ The Application Layer can be further broken down seven main components:
    constructed, it is sent to the underlying transport protocol for IP
    management of the data.
 
-# Current Status of Project Connected Home over IP
-
-The Project’s design and technical processes are intended to be open and
-transparent to the general public, including to Work Group non-members wherever
-possible. The availability of this GitHub repository and its source code under
-an Apache v2 license is an important and demonstrable step to achieving this
-commitment.
-
-The Project endeavors to bring together the best aspects of market-tested
-technologies and to redeploy them as a unified and cohesive whole-system
-solution. The overall goal of this approach is to bring the benefits of the
-Project to consumers and manufacturers as quickly as possible. As a result, what
-you observe in this repository is an implementation-first approach to the
-technical specification, vetting integrations in practice.
-
-The Project repository is growing and evolving to implement the overall
-architecture. The repository currently contains the security foundations,
-message framing and dispatch, an implementation of the interaction model and
-data model. The code examples show simple interactions, and are supported on
-multiple transports -- Wi-Fi and Thread -- starting with resource-constrained
-(i.e., memory, processing) silicon platforms to help ensure the Project’s
-scalability.
-
 # How to Contribute
 
-We welcome your contributions to Project Connected Home over IP. Read our
-contribution guidelines [here](./CONTRIBUTING.md).
+We welcome your contributions to the Project. Read our contribution guidelines [here](./CONTRIBUTING.md).
 
 # Building and Developing in Project
 
