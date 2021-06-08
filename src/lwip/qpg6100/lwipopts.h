@@ -18,7 +18,8 @@
 
 /**
  *    @file
- *      Compile-time configuration for LwIP on QPG6100 platforms.
+ *      Compile-time configuration for LwIP on nRF52 platforms using the
+ *      Nordic nRF5 SDK.
  *
  */
 
