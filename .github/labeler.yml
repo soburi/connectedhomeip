@@ -146,6 +146,9 @@ k32w:
 linux:
     - src/platform/Linux/*
 
+nrf5:
+    - src/platform/nRF5/*
+
 nrf connect:
     - src/platform/nrfconnect/*
 

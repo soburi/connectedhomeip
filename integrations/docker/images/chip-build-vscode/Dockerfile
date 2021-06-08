@@ -15,6 +15,7 @@ COPY --from=esp32 /opt/espressif/qemu-src /opt/espressif/qemu-src
 
 COPY --from=nrf /opt/NordicSemiconductor/nRF5_tools /opt/NordicSemiconductor/nRF5_tools
 COPY --from=nrf /opt/NordicSemiconductor/nrfconnect /opt/NordicSemiconductor/nrfconnect
+COPY --from=nrf /opt/NordicSemiconductor/nRF5_SDK_for_Thread_and_Zigbee /opt/NordicSemiconductor/nRF5_SDK_for_Thread_and_Zigbee
 COPY --from=nrf /opt/ARM-software/gcc-arm-none-eabi-9-2019-q4-major /opt/ARM-software/gcc-arm-none-eabi-9-2019-q4-major
 
 COPY --from=android /opt/android/sdk /opt/android/sdk
@@ -28,6 +29,7 @@ ENV IDF_PATH=/opt/espressif/esp-idf/
 ENV IDF_TOOLS_PATH=/opt/espressif/tools
 ENV QEMU_ESP32_DIR=/opt/espressif/qemu
 ENV QEMU_ESP32=/opt/espressif/qemu/xtensa-softmmu/qemu-system-xtensa
+ENV NRF5_SDK_ROOT=/opt/NordicSemiconductor/nRF5_SDK_for_Thread_and_Zigbee
 ENV NRF5_TOOLS_ROOT=/opt/NordicSemiconductor/nRF5_tools
 ENV ZEPHYR_BASE=/opt/NordicSemiconductor/nrfconnect/zephyr
 ENV ZEPHYR_TOOLCHAIN_VARIANT=gnuarmemb

@@ -35,6 +35,7 @@ declare_args() {
   # Enable openthread support.
   chip_enable_openthread =
       chip_device_platform == "linux" || chip_device_platform == "qpg6100" ||
+      chip_device_platform == "nrf5" ||
       chip_device_platform == "cc13x2_26x2" || chip_device_platform == "k32w"
 
   # Enable wifi support.
@@ -72,6 +73,8 @@ if (chip_device_platform == "cc13x2_26x2") {
   _chip_device_layer = "ESP32"
 } else if (chip_device_platform == "linux") {
   _chip_device_layer = "Linux"
+} else if (chip_device_platform == "nrf5") {
+  _chip_device_layer = "nRF5"
 } else if (chip_device_platform == "nrfconnect") {
   _chip_device_layer = "nrfconnect"
 } else if (chip_device_platform == "qpg6100") {
@@ -114,7 +117,7 @@ assert(
         chip_device_platform == "cc13x2_26x2" ||
         chip_device_platform == "darwin" || chip_device_platform == "efr32" ||
         chip_device_platform == "esp32" || chip_device_platform == "external" ||
-        chip_device_platform == "linux" ||
+        chip_device_platform == "linux" || chip_device_platform == "nrf5" ||
         chip_device_platform == "nrfconnect" ||
         chip_device_platform == "k32w" || chip_device_platform == "qpg6100",
     "Please select a valid value for chip_device_platform")
