@@ -95,3 +95,6 @@
 	path = third_party/mbed-os-posix-socket/repo
 	url = https://github.com/ARMmbed/mbed-os-posix-socket.git
 	branch = main
+[submodule "third_party/openthread/ot-nrf528xx"]
+	path = third_party/openthread/ot-nrf528xx
+	url = https://github.com/openthread/ot-nrf528xx
