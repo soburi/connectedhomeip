@@ -12,8 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//build_overrides/chip.gni")
 import("//build_overrides/nrf5_sdk.gni")
 import("//build_overrides/openthread.gni")
+
+openthread_nrf5xx_root = "${chip_root}/third_party/openthread/ot-nrf5xx"
 
 import("${nrf5_sdk_build_root}/nrf5_sdk.gni")
 
@@ -21,23 +24,23 @@ import("${nrf5_sdk_build_root}/nrf5_sdk.gni")
 # SDK code from OpenThread. See use_openthread_radio_driver below.
 
 nrf528xx_sdk_common = [
-  "${openthread_root}/examples/platforms/nrf528xx/src/misc.c",
-  "${openthread_root}/examples/platforms/nrf528xx/src/radio.c",
-  "${openthread_root}/examples/platforms/nrf528xx/src/alarm.c",
-  "${openthread_root}/examples/platforms/nrf528xx/src/diag.c",
-  "${openthread_root}/examples/platforms/nrf528xx/src/entropy.c",
-  "${openthread_root}/examples/platforms/nrf528xx/src/fem.c",
-  "${openthread_root}/examples/platforms/nrf528xx/src/flash.c",
-  "${openthread_root}/examples/platforms/nrf528xx/src/logging.c",
-  "${openthread_root}/examples/platforms/nrf528xx/src/system.c",
-  "${openthread_root}/examples/platforms/nrf528xx/src/temp.c",
-  "${openthread_root}/examples/platforms/nrf528xx/src/platform-fem.h",
-  "${openthread_root}/examples/platforms/nrf528xx/src/platform-nrf5.h",
+  "${openthread_nrf5xx_root}/src/src/misc.c",
+  "${openthread_nrf5xx_root}/src/src/radio.c",
+  "${openthread_nrf5xx_root}/src/src/alarm.c",
+  "${openthread_nrf5xx_root}/src/src/diag.c",
+  "${openthread_nrf5xx_root}/src/src/entropy.c",
+  "${openthread_nrf5xx_root}/src/src/fem.c",
+  "${openthread_nrf5xx_root}/src/src/flash.c",
+  "${openthread_nrf5xx_root}/src/src/logging.c",
+  "${openthread_nrf5xx_root}/src/src/system.c",
+  "${openthread_nrf5xx_root}/src/src/temp.c",
+  "${openthread_nrf5xx_root}/src/src/platform-fem.h",
+  "${openthread_nrf5xx_root}/src/src/platform-nrf5.h",
 ]
 
 copy("copy_nrf52840_headers") {
   sources = [
-    "${openthread_root}/examples/platforms/nrf528xx/src/platform-softdevice.h",
+    "${openthread_nrf5xx_root}/src/src/platform-softdevice.h",
   ]
 
   outputs =
@@ -47,10 +50,10 @@ copy("copy_nrf52840_headers") {
 static_library("libopenthread-nrf52840-softdevice-sdk") {
   sources = nrf528xx_sdk_common
   sources += [
-    "${openthread_root}/examples/platforms/nrf528xx/src/flash_sd.c",
-    "${openthread_root}/examples/platforms/nrf528xx/src/platform-softdevice.h",
-    "${openthread_root}/examples/platforms/nrf528xx/src/softdevice.c",
-    "${openthread_root}/examples/platforms/nrf528xx/src/softdevice.h",
+    "${openthread_nrf5xx_root}/src/src/flash_sd.c",
+    "${openthread_nrf5xx_root}/src/src/platform-softdevice.h",
+    "${openthread_nrf5xx_root}/src/src/softdevice.c",
+    "${openthread_nrf5xx_root}/src/src/softdevice.h",
   ]
   public_deps = [
     ":copy_nrf52840_headers",
@@ -69,12 +72,12 @@ config("libopenthread-nrf52840-transport_config") {
 
 static_library("libopenthread-nrf52840-transport") {
   sources = [
-    "${openthread_root}/examples/platforms/nrf528xx/src/platform-nrf5-transport.h",
-    "${openthread_root}/examples/platforms/nrf528xx/src/transport/spi-slave.c",
-    "${openthread_root}/examples/platforms/nrf528xx/src/transport/transport-drivers.h",
-    "${openthread_root}/examples/platforms/nrf528xx/src/transport/transport.c",
-    "${openthread_root}/examples/platforms/nrf528xx/src/transport/uart.c",
-    "${openthread_root}/examples/platforms/nrf528xx/src/transport/usb-cdc-uart.c",
+    "${openthread_nrf5xx_root}/src/src/platform-nrf5-transport.h",
+    "${openthread_nrf5xx_root}/src/src/transport/spi-slave.c",
+    "${openthread_nrf5xx_root}/src/src/transport/transport-drivers.h",
+    "${openthread_nrf5xx_root}/src/src/transport/transport.c",
+    "${openthread_nrf5xx_root}/src/src/transport/uart.c",
+    "${openthread_nrf5xx_root}/src/src/transport/usb-cdc-uart.c",
   ]
 
   public_configs = [ ":libopenthread-nrf52840-transport_config" ]
@@ -144,15 +147,15 @@ config("libnordicsemi_nrf52840_config") {
   defines = [ "NRF_802154_PROJECT_CONFIG=\"platform-config.h\"" ]
 
   include_dirs = [
-    "${openthread_root}/examples/platforms/nrf528xx/src",
-    "${openthread_root}/examples/platforms/nrf528xx/nrf52840",
+    "${openthread_nrf5xx_root}/src/src",
+    "${openthread_nrf5xx_root}/src/nrf52840",
   ]
 }
 
 source_set("openthread_core_config_nrf52840") {
   sources = [
-    "${openthread_root}/examples/platforms/nrf528xx/nrf52840/openthread-core-nrf52840-config-check.h",
-    "${openthread_root}/examples/platforms/nrf528xx/nrf52840/openthread-core-nrf52840-config.h",
+    "${openthread_nrf5xx_root}/src/nrf52840/openthread-core-nrf52840-config-check.h",
+    "${openthread_nrf5xx_root}/src/nrf52840/openthread-core-nrf52840-config.h",
   ]
 
   public_configs = [ ":libnordicsemi_nrf52840_config" ]
@@ -160,8 +163,8 @@ source_set("openthread_core_config_nrf52840") {
 
 source_set("libnordicsemi_nrf52840") {
   sources = [
-    "${openthread_root}/examples/platforms/nrf528xx/nrf52840/platform-config.h",
-    "${openthread_root}/examples/platforms/nrf528xx/nrf52840/transport-config.h",
+    "${openthread_nrf5xx_root}/src/nrf52840/platform-config.h",
+    "${openthread_nrf5xx_root}/src/nrf52840/transport-config.h",
   ]
 
   public_configs = [ ":libnordicsemi_nrf52840_config" ]
