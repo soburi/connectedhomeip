@@ -37,12 +37,12 @@ RUN set -x \
 # nRF5 SDK
 # ==================================================
 RUN set -x \
-    && curl -o /tmp/nRF5SDKforThreadandZigbee.zip \
-    https://www.nordicsemi.com/-/media/Software-and-other-downloads/SDKs/nRF5-SDK-for-Thread/nRF5-SDK-for-Thread-and-Zigbee/nRF5SDKforThreadandZigbeev400dc7186b.zip \
-    && (mkdir /opt/NordicSemiconductor/nRF5_SDK_for_Thread_and_Zigbee \
+    && curl -o /tmp/nRF5SDKforThreadv41.zip \
+    https://www.nordicsemi.com/-/media/Software-and-other-downloads/SDKs/nRF5-SDK-for-Thread/nRF5-SDK-for-Thread-and-Zigbee/nRF5SDKforThreadv41.zip \
+    && (mkdir -p /opt/NordicSemiconductor/nRF5_SDK_for_Thread_and_Zigbee \
     && cd /opt/NordicSemiconductor/nRF5_SDK_for_Thread_and_Zigbee \
-    && unzip /tmp/nRF5SDKforThreadandZigbee.zip) \
-    && rm -rf /tmp/nRF5SDKforThreadandZigbee.zip \
+    && unzip /tmp/nRF5SDKforThreadv41.zip) \
+    && rm -rf /tmp/nRF5SDKforThreadv41.zip \
     && : # last line
 
 ENV NRF5_SDK_ROOT=/opt/NordicSemiconductor/nRF5_SDK_for_Thread_and_Zigbee

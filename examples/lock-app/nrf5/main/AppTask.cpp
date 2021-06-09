@@ -20,8 +20,15 @@
 #include "AppTask.h"
 #include "AppEvent.h"
 #include "LEDWidget.h"
-#include "Server.h"
 #include "Service.h"
+
+#include <app/server/OnboardingCodesUtil.h>
+#include <app/server/Server.h>
+
+//#include <app/common/gen/attribute-id.h>
+//#include <app/common/gen/attribute-type.h>
+//#include <app/common/gen/cluster-id.h>
+//#include <app/util/attribute-storage.h>
 
 #include "app_button.h"
 #include "app_config.h"
@@ -215,7 +222,7 @@ int AppTask::Init()
         // TODO: Usage of STL will significantly increase the image size, this should be changed to more efficient method for
         // generating payload
         std::string result;
-        err = generator.payloadBase41Representation(result);
+        err = generator.payloadBase38Representation(result);
         if (err != CHIP_NO_ERROR)
         {
             NRF_LOG_INFO("Failed to generate QR Code");
