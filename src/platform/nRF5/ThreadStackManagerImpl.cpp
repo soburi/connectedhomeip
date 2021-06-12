@@ -66,7 +66,7 @@ bool ThreadStackManagerImpl::IsInitialized()
     return sInstance.mThreadStackLock != NULL;
 }
 
-void ThreadStackManagerImpl::_OnCHIPoBLEAdvertisingStart(void)
+void ThreadStackManagerImpl::_OnWoBLEAdvertisingStart(void)
 {
     // If Thread-over-BLE is enabled, ensure that ToBLE advertising is stopped before
     // starting CHIPoBLE advertising.  This is accomplished by disabling the OpenThread
@@ -86,7 +86,7 @@ void ThreadStackManagerImpl::_OnCHIPoBLEAdvertisingStart(void)
 #endif
 }
 
-void ThreadStackManagerImpl::_OnCHIPoBLEAdvertisingStop(void)
+void ThreadStackManagerImpl::_OnWoBLEAdvertisingStop(void)
 {
     // If Thread-over-BLE is enabled, and a Thread provision exists, ensure that ToBLE
     // advertising is re-activated once CHIPoBLE advertising stops.

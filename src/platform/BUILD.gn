@@ -592,6 +592,8 @@ if (chip_device_platform != "none" && chip_device_platform != "external") {
         "nRF5/DeviceNetworkProvisioningDelegateImpl.cpp",
         "nRF5/DeviceNetworkProvisioningDelegateImpl.h",
         "nRF5/InetPlatformConfig.h",
+        "nRF5/KeyValueStoreManagerImpl.cpp",
+        "nRF5/KeyValueStoreManagerImpl.h",
         "nRF5/Logging.cpp",
         "nRF5/PlatformManagerImpl.cpp",
         "nRF5/PlatformManagerImpl.h",

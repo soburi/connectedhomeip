@@ -16,7 +16,7 @@ import("//build_overrides/chip.gni")
 import("//build_overrides/nrf5_sdk.gni")
 import("//build_overrides/openthread.gni")
 
-openthread_nrf5xx_root = "${chip_root}/third_party/openthread/ot-nrf5xx"
+openthread_nrf5xx_root = "${chip_root}/third_party/openthread/ot-nrf528xx"
 
 import("${nrf5_sdk_build_root}/nrf5_sdk.gni")
 
@@ -98,7 +98,7 @@ declare_args() {
 
 if (use_openthread_radio_driver) {
   nrf528xx_radio_driver_src =
-      "${openthread_root}/third_party/NordicSemiconductor/drivers/radio"
+      "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/drivers/radio"
 } else {
   nrf528xx_radio_driver_src =
       "${nrf5_sdk_root}/external/nRF-IEEE-802.15.4-radio-driver/src"
