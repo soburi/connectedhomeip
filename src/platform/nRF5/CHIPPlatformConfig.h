@@ -2,6 +2,7 @@
  *
  *    Copyright (c) 2020 Project CHIP Authors
  *    Copyright (c) 2019 Google LLC.
+ *    All rights reserved.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -45,6 +46,9 @@
 #define CHIP_CONFIG_PERSISTED_STORAGE_ENC_MSG_CNTR_ID 1
 #define CHIP_CONFIG_PERSISTED_STORAGE_MAX_KEY_LENGTH 2
 
+#define CHIP_CONFIG_LIFETIIME_PERSISTED_COUNTER_KEY 0x01
+#define CHIP_CONFIG_PERSISTED_STORAGE_KEY_GLOBAL_MESSAGE_COUNTER 0x2
+
 #define CHIP_CONFIG_TIME_ENABLE_CLIENT 1
 #define CHIP_CONFIG_TIME_ENABLE_SERVER 0
 
@@ -80,8 +84,6 @@
 #define CHIP_CONFIG_ENABLE_KEY_EXPORT_INITIATOR 0
 
 #define CHIP_CONFIG_ENABLE_PROVISIONING_BUNDLE_SUPPORT 0
-#define CHIP_CONFIG_LIFETIIME_PERSISTED_COUNTER_KEY 0x01
-#define CHIP_CONFIG_PERSISTED_STORAGE_KEY_GLOBAL_MESSAGE_COUNTER 0x2
 
 // ==================== General Configuration Overrides ====================
 

@@ -2,6 +2,7 @@
  *
  *    Copyright (c) 2020 Project CHIP Authors
  *    Copyright (c) 2019 Google LLC.
+ *    All rights reserved.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -35,11 +36,15 @@
 #define CHIP_DEVICE_CONFIG_ENABLE_WIFI_STATION 0
 #define CHIP_DEVICE_CONFIG_ENABLE_WIFI_AP 0
 
-#if CHIP_ENABLE_OPENTHREAD
 #define CHIP_DEVICE_CONFIG_ENABLE_THREAD 1
+
+#ifndef CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
+#define CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE 1
 #endif
 
-#define CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE 1
+#ifndef CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
+#define CHIP_DEVICE_CHIP0BLE_DEBUG 0
+#endif
 
 #define CHIP_DEVICE_CONFIG_ENABLE_CHIP_TIME_SERVICE_TIME_SYNC 0
 
@@ -57,7 +62,7 @@
  * @def CHIP_DEVICE_LAYER_BLE_OBSERVER_PRIORITY
  *
  * The priority of the SoftDevice observer event handler registered by the
- * Openchip BleLayer.
+ * chip BleLayer.
  */
 #ifndef CHIP_DEVICE_LAYER_BLE_OBSERVER_PRIORITY
 #define CHIP_DEVICE_LAYER_BLE_OBSERVER_PRIORITY 3
@@ -66,7 +71,7 @@
 /**
  * @def CHIP_DEVICE_LAYER_BLE_CONN_CFG_TAG
  *
- * The SoftDevice BLE connection configuration tag used by the Openchip
+ * The SoftDevice BLE connection configuration tag used by the chip
  * BleLayer.
  */
 #ifndef CHIP_DEVICE_LAYER_BLE_CONN_CFG_TAG
@@ -74,7 +79,6 @@
 #endif // CHIP_DEVICE_LAYER_BLE_CONN_CFG_TAG
 
 // ========== Platform-specific Configuration Overrides =========
-
 #ifndef CHIP_DEVICE_CONFIG_CHIP_TASK_STACK_SIZE
 #define CHIP_DEVICE_CONFIG_CHIP_TASK_STACK_SIZE 4096
 #endif // CHIP_DEVICE_CONFIG_CHIP_TASK_STACK_SIZE
@@ -82,6 +86,10 @@
 #ifndef CHIP_DEVICE_CONFIG_THREAD_TASK_STACK_SIZE
 #define CHIP_DEVICE_CONFIG_THREAD_TASK_STACK_SIZE 4096
 #endif // CHIP_DEVICE_CONFIG_THREAD_TASK_STACK_SIZE
+
+#ifndef CHIP_DEVICE_CONFIG_BLE_APP_TASK_NAME
+#define CHIP_DEVICE_CONFIG_BLE_APP_TASK_NAME "BLE App Task"
+#endif // CHIP_DEVICE_CONFIG_BLE_APP_TASK_NAME
 
 #define CHIP_DEVICE_CONFIG_ENABLE_WIFI_TELEMETRY 0
 #define CHIP_DEVICE_CONFIG_ENABLE_THREAD_TELEMETRY 0
