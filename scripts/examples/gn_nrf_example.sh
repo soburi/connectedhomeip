@@ -24,6 +24,8 @@ CHIP_ROOT="$(dirname "$0")/../.."
 
 source "$CHIP_ROOT/scripts/activate.sh"
 
+find /opt/NordicSemiconductor/nRF5_SDK_for_Thread_and_Zigbee/
+
 set -x
 env
 
