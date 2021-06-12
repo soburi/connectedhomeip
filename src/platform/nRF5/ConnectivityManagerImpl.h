@@ -2,6 +2,7 @@
  *
  *    Copyright (c) 2020 Project CHIP Authors
  *    Copyright (c) 2018 Nest Labs, Inc.
+ *    All rights reserved.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -33,19 +34,12 @@
 #include <platform/internal/GenericConnectivityManagerImpl_NoWiFi.h>
 
 namespace chip {
-namespace Inet {
-class IPAddress;
-} // namespace Inet
-} // namespace chip
-
-namespace chip {
 namespace DeviceLayer {
 
 /**
  * Concrete implementation of the ConnectivityManager singleton object for Nordic nRF52 platforms.
  */
 class ConnectivityManagerImpl final : public ConnectivityManager,
-                                      public Internal::GenericConnectivityManagerImpl<ConnectivityManagerImpl>,
 #if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
                                       public Internal::GenericConnectivityManagerImpl_BLE<ConnectivityManagerImpl>,
 #else
@@ -56,7 +50,8 @@ class ConnectivityManagerImpl final : public ConnectivityManager,
 #else
                                       public Internal::GenericConnectivityManagerImpl_NoThread<ConnectivityManagerImpl>,
 #endif
-                                      public Internal::GenericConnectivityManagerImpl_NoWiFi<ConnectivityManagerImpl>
+                                      public Internal::GenericConnectivityManagerImpl_NoWiFi<ConnectivityManagerImpl>,
+                                      public Internal::GenericConnectivityManagerImpl<ConnectivityManagerImpl>
 {
     // Allow the ConnectivityManager interface class to delegate method calls to
     // the implementation methods provided by this class.
@@ -97,7 +92,7 @@ inline bool ConnectivityManagerImpl::_HaveServiceConnectivity(void)
 /**
  * Returns the public interface of the ConnectivityManager singleton object.
  *
- * chip applications should use this to access features of the ConnectivityManager object
+ * Chip applications should use this to access features of the ConnectivityManager object
  * that are common to all platforms.
  */
 inline ConnectivityManager & ConnectivityMgr(void)
@@ -108,7 +103,7 @@ inline ConnectivityManager & ConnectivityMgr(void)
 /**
  * Returns the platform-specific implementation of the ConnectivityManager singleton object.
  *
- * chip applications can use this to gain access to features of the ConnectivityManager
+ * Chip applications can use this to gain access to features of the ConnectivityManager
  * that are specific to the ESP32 platform.
  */
 inline ConnectivityManagerImpl & ConnectivityMgrImpl(void)

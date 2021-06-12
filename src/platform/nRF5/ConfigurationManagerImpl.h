@@ -2,6 +2,7 @@
  *
  *    Copyright (c) 2020 Project CHIP Authors
  *    Copyright (c) 2018 Nest Labs, Inc.
+ *    All rights reserved.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -74,7 +75,7 @@ private:
 /**
  * Returns the public interface of the ConfigurationManager singleton object.
  *
- * chip applications should use this to access features of the ConfigurationManager object
+ * Chip applications should use this to access features of the ConfigurationManager object
  * that are common to all platforms.
  */
 inline ConfigurationManager & ConfigurationMgr(void)
@@ -85,7 +86,7 @@ inline ConfigurationManager & ConfigurationMgr(void)
 /**
  * Returns the platform-specific implementation of the ConfigurationManager singleton object.
  *
- * chip applications can use this to gain access to features of the ConfigurationManager
+ * Chip applications can use this to gain access to features of the ConfigurationManager
  * that are specific to the ESP32 platform.
  */
 inline ConfigurationManagerImpl & ConfigurationMgrImpl(void)

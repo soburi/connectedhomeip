@@ -2,6 +2,7 @@
  *
  *    Copyright (c) 2020 Project CHIP Authors
  *    Copyright (c) 2018 Nest Labs, Inc.
+ *    All rights reserved.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -18,13 +19,13 @@
 
 /**
  *    @file
- *          Provides an implementation of the chip Group Key Store interface
+ *          Provides an implementation of the Chip Group Key Store interface
  *          for platforms based on the Nordic nRF5 SDK.
  */
 
 #include <core/CHIPKeyIds.h>
-#include <platform/internal/CHIPDeviceLayerInternal.h>
 #include <platform/nRF5/nRF5Config.h>
+#include <platform/internal/CHIPDeviceLayerInternal.h>
 
 namespace chip {
 namespace DeviceLayer {
@@ -48,7 +49,7 @@ public:
 };
 
 /**
- * An implementation of the chip GroupKeyStoreBase API for platforms based
+ * An implementation of the Chip GroupKeyStoreBase API for platforms based
  * on the Nordic nRF5 SDK.
  */
 class GroupKeyStoreImpl final : public ::chip::Profiles::Security::AppKeys::GroupKeyStoreBase, private NRF5Config
@@ -74,8 +75,10 @@ private:
 
     static constexpr size_t kMaxEncodedKeySize = kFixedEncodedKeySize + ChipGroupKey::MaxKeySize;
 
-    static constexpr uint16_t kGroupKeyFileId    = GetFileId(kConfigKey_GroupKey);
-    static constexpr uint16_t kGroupKeyRecordKey = GetRecordKey(kConfigKey_GroupKey);
+    /* Not used
+    static constexpr uint16_t kGroupKeyFileId =     GetFileId(kConfigKey_GroupKey);
+    static constexpr uint16_t kGroupKeyRecordKey =  GetRecordKey(kConfigKey_GroupKey);
+    */
 
     static CHIP_ERROR EncodeGroupKey(const ChipGroupKey & key, uint8_t * buf, size_t bufSize, size_t & encodedKeyLen);
     static CHIP_ERROR DecodeGroupKey(const uint8_t * encodedKey, size_t encodedKeyLen, ChipGroupKey & key);
