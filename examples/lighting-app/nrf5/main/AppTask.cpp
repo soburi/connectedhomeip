@@ -19,10 +19,11 @@
 
 #include "AppTask.h"
 #include "AppEvent.h"
+#include "support/ErrorStr.h"
+#include <app/server/Server.h>
 #include "LEDWidget.h"
 #include "LightingCLI.h"
 #include "LightingManager.h"
-#include "Server.h"
 #include "Service.h"
 
 #include "app_button.h"
@@ -46,7 +47,10 @@
 #include <setup_payload/SetupPayload.h>
 
 #include "attribute-storage.h"
-#include "gen/cluster-id.h"
+#include <app/common/gen/attribute-id.h>
+#include <app/common/gen/attribute-type.h>
+#include <app/common/gen/cluster-id.h>
+#include <app/util/attribute-storage.h>
 
 APP_TIMER_DEF(sFunctionTimer);
 
@@ -106,8 +110,6 @@ int AppTask::StartAppTask()
 int AppTask::Init()
 {
     ret_code_t ret;
-
-    StartShellTask();
 
     // Init ZCL Data Model and start server
     InitServer();
@@ -211,7 +213,7 @@ int AppTask::Init()
         // TODO: Usage of STL will significantly increase the image size, this should be changed to more efficient method for
         // generating payload
         std::string result;
-        err = generator.payloadBase41Representation(result);
+        err = generator.payloadBase38Representation(result);
         if (err != CHIP_NO_ERROR)
         {
             NRF_LOG_ERROR("Failed to generate QR Code");
