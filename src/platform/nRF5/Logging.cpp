@@ -61,12 +61,12 @@ NRF_LOG_MODULE_REGISTER();
 
 namespace chip {
 namespace Logging {
-
+namespace Platform {
 /**
  * CHIP log output function.
  */
 
-void LogV(uint8_t module, uint8_t category, const char * msg, va_list v)
+void LogV(const char* module, uint8_t category, const char * msg, va_list v)
 {
     (void) module;
     (void) category;
@@ -76,15 +76,15 @@ void LogV(uint8_t module, uint8_t category, const char * msg, va_list v)
     if (IsCategoryEnabled(category))
     {
         {
-            char formattedMsg[CHIP_DEVICE_CONFIG_LOG_MESSAGE_MAX_SIZE];
+            char formattedMsg[CHIP_CONFIG_LOG_MESSAGE_MAX_SIZE];
             size_t prefixLen;
 
-            constexpr size_t maxPrefixLen = ChipLoggingModuleNameLen + 3;
+            constexpr size_t maxPrefixLen = kMaxModuleNameLen + 3;
             static_assert(sizeof(formattedMsg) > maxPrefixLen);
 
             // Form the log prefix, e.g. "[DL] "
             formattedMsg[0] = '[';
-            GetModuleName(formattedMsg + 1, module);
+            //GetModuleName(formattedMsg + 1, CHIP_CONFIG_LOG_MESSAGE_MAX_SIZE-2, module);
             prefixLen                 = strlen(formattedMsg);
             formattedMsg[prefixLen++] = ']';
             formattedMsg[prefixLen++] = ' ';
@@ -99,7 +99,6 @@ void LogV(uint8_t module, uint8_t category, const char * msg, va_list v)
                 NRF_LOG_ERROR("%s", NRF_LOG_PUSH(formattedMsg));
                 break;
             case kLogCategory_Progress:
-            case kLogCategory_Retain:
             default:
                 NRF_LOG_INFO("%s", NRF_LOG_PUSH(formattedMsg));
                 break;
@@ -123,7 +122,7 @@ void LogV(uint8_t module, uint8_t category, const char * msg, va_list v)
     (void) v;
 #endif // NRF_LOG_ENABLED
 }
-
+} // namespace Platform
 } // namespace Logging
 } // namespace chip
 
@@ -142,7 +141,7 @@ extern "C" void LwIPLog(const char * msg, ...)
 
 #if NRF_LOG_ENABLED
     {
-        char formattedMsg[CHIP_DEVICE_CONFIG_LOG_MESSAGE_MAX_SIZE];
+        char formattedMsg[CHIP_CONFIG_LOG_MESSAGE_MAX_SIZE];
 
         // Append the log message.
         size_t len = vsnprintf(formattedMsg, sizeof(formattedMsg), msg, v);
@@ -182,7 +181,7 @@ extern "C" void otPlatLog(otLogLevel aLogLevel, otLogRegion aLogRegion, const ch
 
 #if NRF_LOG_ENABLED
     {
-        char formattedMsg[CHIP_DEVICE_CONFIG_LOG_MESSAGE_MAX_SIZE];
+        char formattedMsg[CHIP_CONFIG_LOG_MESSAGE_MAX_SIZE];
 
         // Append the log message.
         vsnprintf(formattedMsg, sizeof(formattedMsg), aFormat, v);

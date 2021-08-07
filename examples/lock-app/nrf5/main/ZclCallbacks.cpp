@@ -20,16 +20,16 @@
 
 #include "BoltLockManager.h"
 
-#include "gen/attribute-id.h"
-#include "gen/cluster-id.h"
-#include "gen/znet-bookkeeping.h"
+#include "app/common/gen/attribute-id.h"
+#include "app/common/gen/cluster-id.h"
+//#include "app/common/gen/znet-bookkeeping.h"
 #include <app/chip-zcl-zpro-codec.h>
 #include <app/util/af-types.h>
 #include <app/util/attribute-storage.h>
 #include <app/util/util.h>
 
 using namespace ::chip;
-
+#if 0
 extern "C" {
 void emberAfPostAttributeChangeCallback(uint8_t endpoint, EmberAfClusterId clusterId, EmberAfAttributeId attributeId, uint8_t mask,
                                         uint16_t manufacturerCode, uint8_t type, uint8_t size, uint8_t * value)
@@ -69,3 +69,4 @@ void emberAfPluginOnOffClusterServerPostInitCallback(uint8_t endpoint)
     // TODO: implement any additional On/off Cluster Server post init actions
 }
 }
+#endif
