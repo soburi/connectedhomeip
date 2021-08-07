@@ -123,7 +123,8 @@ assert(
         chip_device_platform == "cc13x2_26x2" ||
         chip_device_platform == "darwin" || chip_device_platform == "efr32" ||
         chip_device_platform == "esp32" || chip_device_platform == "external" ||
-        chip_device_platform == "linux" || chip_device_platform == "nrf5" ||
+        chip_device_platform == "linux" ||
+        chip_device_platform == "nrf5" ||
         chip_device_platform == "nrfconnect" ||
         chip_device_platform == "k32w" || chip_device_platform == "qpg" ||
         chip_device_platform == "telink" || chip_device_platform == "mbed",
