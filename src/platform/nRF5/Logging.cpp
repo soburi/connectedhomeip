@@ -28,6 +28,7 @@
 #include <nrf_log.h>
 #include <platform/internal/CHIPDeviceLayerInternal.h>
 #include <support/logging/CHIPLogging.h>
+#include <ctype.h>
 
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
 #include <openthread/platform/logging.h>
