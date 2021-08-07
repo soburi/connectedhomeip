@@ -105,16 +105,10 @@ template("nrf5_sdk") {
     lib_dirs = [ "${nrf5_sdk_root}/modules/nrfx/mdk" ]
 
     libs = [
-      "${nrf5_sdk_root}/external/nrf_security/lib/libmbedcrypto_glue.a",
-      "${nrf5_sdk_root}/external/nrf_security/lib/libmbedcrypto_glue.a",
-      "${nrf5_sdk_root}/external/nrf_security/lib/libmbedcrypto_glue_cc310.a",
-      "${nrf5_sdk_root}/external/nrf_security/lib/libmbedcrypto_glue_vanilla.a",
-      "${nrf5_sdk_root}/external/nrf_security/lib/libmbedcrypto_cc310_backend.a",
-      "${nrf5_sdk_root}/external/nrf_security/lib/libmbedcrypto_vanilla_backend.a",
-      "${nrf5_sdk_root}/external/nrf_security/lib/libmbedtls_base_vanilla.a",
-      "${nrf5_sdk_root}/external/nrf_security/lib/libmbedtls_tls_vanilla.a",
-      "${nrf5_sdk_root}/external/nrf_security/lib/libmbedtls_x509_vanilla.a",
-      "${nrf5_sdk_root}/external/nrf_security/lib/libnrf_cc310_platform_0.9.2.a",
+      "${nrf5_sdk_root}/external/nrf_security/lib/libmbedtls.a",
+      "${nrf5_sdk_root}/external/nrf_security/lib/libmbedcrypto.a",
+      "${nrf5_sdk_root}/external/nrf_security/lib/libmbedx509.a",
+      "${nrf5_sdk_root}/external/nrf_security/lib/libnrf_cc310_platform_0.9.10.a",
     ]
 
     defines = [
@@ -363,9 +357,20 @@ template("nrf5_sdk") {
       "${nrf5_sdk_root}/external/nrf_security/mbedtls_plat_config/nrf52840-mbedtls-config.h",
       "${nrf5_sdk_root}/external/nrf_security/nrf_cc310_plat/include/nrf_cc310_platform_abort.h",
       "${nrf5_sdk_root}/external/nrf_security/nrf_cc310_plat/include/nrf_cc310_platform_defines.h",
+      "${nrf5_sdk_root}/external/nrf_security/nrf_cc310_plat/include/nrf_cc310_platform_entropy.h",
+      "${nrf5_sdk_root}/external/nrf_security/nrf_cc310_plat/include/nrf_cc310_platform.h",
       "${nrf5_sdk_root}/external/nrf_security/nrf_cc310_plat/include/nrf_cc310_platform_mutex.h",
-      "${nrf5_sdk_root}/external/nrf_security/nrf_cc310_plat/src/nrf_cc310_platform_abort_freertos.c",
-      "${nrf5_sdk_root}/external/nrf_security/nrf_cc310_plat/src/nrf_cc310_platform_mutex_freertos.c",
+      "${nrf5_sdk_root}/external/nrf_security/nrf_cc310_plat/include/nrf_cc3xx_platform_abort.h",
+      "${nrf5_sdk_root}/external/nrf_security/nrf_cc310_plat/include/nrf_cc3xx_platform_ctr_drbg.h",
+      "${nrf5_sdk_root}/external/nrf_security/nrf_cc310_plat/include/nrf_cc310_platform_defines.h",
+      "${nrf5_sdk_root}/external/nrf_security/nrf_cc310_plat/include/nrf_cc3xx_platform_derived_key.h",
+      "${nrf5_sdk_root}/external/nrf_security/nrf_cc310_plat/include/nrf_cc3xx_platform_entropy.h",
+      "${nrf5_sdk_root}/external/nrf_security/nrf_cc310_plat/include/nrf_cc3xx_platform.h",
+      "${nrf5_sdk_root}/external/nrf_security/nrf_cc310_plat/include/nrf_cc3xx_platform_hmac_drbg.h",
+      "${nrf5_sdk_root}/external/nrf_security/nrf_cc310_plat/include/nrf_cc3xx_platform_kmu.h",
+      "${nrf5_sdk_root}/external/nrf_security/nrf_cc310_plat/include/nrf_cc3xx_platform_mutex.h",
+      "${nrf5_sdk_root}/external/nrf_security/nrf_cc310_plat/src/nrf_cc3xx_platform_abort_freertos.c",
+      "${nrf5_sdk_root}/external/nrf_security/nrf_cc310_plat/src/nrf_cc3xx_platform_mutex_freertos.c",
       "${nrf5_sdk_root}/integration/nrfx/legacy/apply_old_config.h",
       "${nrf5_sdk_root}/integration/nrfx/legacy/nrf_drv_clock.c",
       "${nrf5_sdk_root}/integration/nrfx/legacy/nrf_drv_clock.h",
