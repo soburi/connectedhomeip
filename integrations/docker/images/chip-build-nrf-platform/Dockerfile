@@ -21,6 +21,34 @@ RUN set -x \
     && rm -rf ./install /var/lib/apt/lists/ \
     && : # last line
 
+ENV NRF5_TOOLS_ROOT=/opt/NordicSemiconductor/nRF5_tools
+ENV PATH=${NRF5_TOOLS_ROOT}/JLink_Linux_V688a_x86_64:${PATH}
+ENV PATH=${NRF5_TOOLS_ROOT}/mergehex:${NRF5_TOOLS_ROOT}/nrfjprog:${PATH}
+ENV LD_LIBRARY_PATH=${NRF5_TOOLS_ROOT}/JLink_Linux_V688a_x86_64:${LD_LIBRARY_PATH}
+
+# GNU ARM Embedded toolchain, cross compiler for various platform builds
+RUN set -x \
+    && (mkdir -p /opt/ARM-software && cd /opt/ARM-software \
+    && curl https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-rm/9-2019q4/gcc-arm-none-eabi-9-2019-q4-major-x86_64-linux.tar.bz2 \
+    | tar jxvf -) \
+    && : # last line
+
+# ==================================================
+# nRF5 SDK
+# ==================================================
+RUN set -x \
+    && curl -o /tmp/nRF5SDKforThreadandZigbee.zip \
+    https://www.nordicsemi.com/-/media/Software-and-other-downloads/SDKs/nRF5-SDK-for-Thread/nRF5-SDK-for-Thread-and-Zigbee/nRF5SDKforThreadandZigbeev400dc7186b.zip \
+    && (mkdir /opt/NordicSemiconductor/nRF5_SDK_for_Thread_and_Zigbee \
+    && cd /opt/NordicSemiconductor/nRF5_SDK_for_Thread_and_Zigbee \
+    && unzip /tmp/nRF5SDKforThreadandZigbee.zip) \
+    && rm -rf /tmp/nRF5SDKforThreadandZigbee.zip \
+    && : # last line
+
+ENV NRF5_SDK_ROOT=/opt/NordicSemiconductor/nRF5_SDK_for_Thread_and_Zigbee
+ENV NRF5_TOOLS_ROOT=/opt/NordicSemiconductor/nRF5_tools
+ENV ARM_GCC_INSTALL_ROOT=/opt/ARM-software/gcc-arm-none-eabi-9-2019-q4-major/bin/
+
 # ==================================================
 # nRF Connect SDK
 # ==================================================
