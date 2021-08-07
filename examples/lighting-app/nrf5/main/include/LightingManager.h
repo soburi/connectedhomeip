@@ -30,8 +30,8 @@ class LightingManager
 public:
     enum Action_t
     {
-        ON_ACTION = 0,
-        OFF_ACTION,
+        TURNON_ACTION = 0,
+        TURNOFF_ACTION,
 
         INVALID_ACTION
     } Action;
@@ -43,20 +43,20 @@ public:
     } State;
 
     int Init(uint32_t gpioNum);
-    bool IsTurnedOn();
-    bool InitiateAction(Action_t aAction);
+    bool IsTurnedOff();
+    bool InitiateAction(int32_t aActor, Action_t aAction);
 
-    using LightingCallback_fn = std::function<void(Action_t)>;
-
-    void SetCallbacks(LightingCallback_fn aActionInitiated_CB, LightingCallback_fn aActionCompleted_CB);
+    using Callback_fn_initiated = std::function<void(Action_t, int32_t)>;
+    using Callback_fn_completed = std::function<void(Action_t)>;
+    void SetCallbacks(Callback_fn_initiated aActionInitiated_CB, Callback_fn_completed aActionCompleted_CB);
 
 private:
     friend LightingManager & LightingMgr(void);
     State_t mState;
     uint32_t mGPIONum;
 
-    LightingCallback_fn mActionInitiated_CB;
-    LightingCallback_fn mActionCompleted_CB;
+    Callback_fn_initiated mActionInitiated_CB;
+    Callback_fn_completed mActionCompleted_CB;
 
     void Set(bool aOn);
 

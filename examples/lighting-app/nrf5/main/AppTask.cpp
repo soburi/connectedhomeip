@@ -16,13 +16,11 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
 #include "AppTask.h"
 #include "AppEvent.h"
 #include "support/ErrorStr.h"
 #include <app/server/Server.h>
 #include "LEDWidget.h"
-#include "LightingCLI.h"
 #include "LightingManager.h"
 #include "Service.h"
 
@@ -67,18 +65,22 @@ SemaphoreHandle_t sCHIPEventLock;
 TaskHandle_t sAppTaskHandle;
 QueueHandle_t sAppEventQueue;
 
-LEDWidget sStatusLED;
-LEDWidget sUnusedLED;
-LEDWidget sUnusedLED_1;
+static LEDWidget sStatusLED;
+static LEDWidget sLightLED;
+static LEDWidget sUnusedLED_1;
 
-bool sIsThreadProvisioned     = false;
-bool sIsThreadEnabled         = false;
+static bool sIsThreadProvisioned     = false;
+static bool sIsThreadEnabled         = false;
+static bool sHaveBLEConnections      = false;
+static bool sHaveServiceConnectivity = false;
 bool sIsThreadAttached        = false;
 bool sIsPairedToAccount       = false;
-bool sHaveBLEConnections      = false;
-bool sHaveServiceConnectivity = false;
 
 } // namespace
+
+#if CHIP_DEVICE_CONFIG_THREAD_ENABLE_CLI
+extern "C" void nrf5UartProcess(void);
+#endif
 
 using namespace ::chip::DeviceLayer;
 
@@ -117,7 +119,7 @@ int AppTask::Init()
     // Initialize LEDs
     sStatusLED.Init(SYSTEM_STATE_LED);
 
-    sUnusedLED.Init(BSP_LED_2);
+    sLightLED.Init(BSP_LED_2);
     sUnusedLED_1.Init(BSP_LED_3);
 
     // Initialize buttons
@@ -260,6 +262,9 @@ void AppTask::AppTaskMain(void * pvParameter)
         // task is busy (e.g. with a long crypto operation).
         if (PlatformMgr().TryLockChipStack())
         {
+#if CHIP_DEVICE_CONFIG_THREAD_ENABLE_CLI
+            nrf5UartProcess();
+#endif
             sIsThreadProvisioned     = ConnectivityMgr().IsThreadProvisioned();
             sIsThreadEnabled         = ConnectivityMgr().IsThreadEnabled();
             sIsThreadAttached        = ConnectivityMgr().IsThreadAttached();
@@ -305,7 +310,7 @@ void AppTask::AppTaskMain(void * pvParameter)
         }
 
         sStatusLED.Animate();
-        sUnusedLED.Animate();
+        sLightLED.Animate();
         sUnusedLED_1.Animate();
         GetAppTask().UpdateClusterState();
 
@@ -324,21 +329,23 @@ void AppTask::LightingActionEventHandler(AppEvent * aEvent)
 {
     bool initiated = false;
     LightingManager::Action_t action;
+    int32_t actor = 0;
     ret_code_t ret = NRF_SUCCESS;
 
     if (aEvent->Type == AppEvent::kEventType_Lighting)
     {
         action = static_cast<LightingManager::Action_t>(aEvent->LightingEvent.Action);
+        //TODO actor  = aEvent->LightEvent.Actor;
     }
     else if (aEvent->Type == AppEvent::kEventType_Button)
     {
-        if (LightingMgr().IsTurnedOn())
+        if (!LightingMgr().IsTurnedOff())
         {
-            action = LightingManager::OFF_ACTION;
+            action = LightingManager::TURNOFF_ACTION;
         }
         else
         {
-            action = LightingManager::ON_ACTION;
+            action = LightingManager::TURNON_ACTION;
         }
     }
     else
@@ -348,7 +355,7 @@ void AppTask::LightingActionEventHandler(AppEvent * aEvent)
 
     if (ret == NRF_SUCCESS)
     {
-        initiated = LightingMgr().InitiateAction(action);
+        initiated = LightingMgr().InitiateAction(actor, action);
 
         if (!initiated)
         {
@@ -412,10 +419,10 @@ void AppTask::FunctionTimerEventHandler(AppEvent * aEvent)
         // Turn off all LEDs before starting blink to make sure blink is co-ordinated.
         sStatusLED.Set(false);
         sUnusedLED_1.Set(false);
-        sUnusedLED.Set(false);
+        sLightLED.Set(false);
 
         sStatusLED.Blink(500);
-        sUnusedLED.Blink(500);
+        sLightLED.Blink(500);
         sUnusedLED_1.Blink(500);
     }
     else if (sAppTask.mFunctionTimerActive && sAppTask.mFunction == kFunction_FactoryReset)
@@ -456,7 +463,7 @@ void AppTask::FunctionHandler(AppEvent * aEvent)
         }
         else if (sAppTask.mFunctionTimerActive && sAppTask.mFunction == kFunction_FactoryReset)
         {
-            sUnusedLED.Set(false);
+            sLightLED.Set(false);
             sUnusedLED_1.Set(false);
 
             sAppTask.CancelTimer();
@@ -497,15 +504,14 @@ void AppTask::StartTimer(uint32_t aTimeoutInMs)
     mFunctionTimerActive = true;
 }
 
-void AppTask::ActionInitiated(LightingManager::Action_t aAction)
+void AppTask::ActionInitiated(LightingManager::Action_t aAction, int32_t aActor)
 {
-    // If the action has been initiated by the lock, update the bolt lock trait
-    // and start flashing the LEDs rapidly to indicate action initiation.
-    if (aAction == LightingManager::ON_ACTION)
+    // start flashing the LEDs rapidly to indicate action initiation.
+    if (aAction == LightingManager::TURNON_ACTION)
     {
         NRF_LOG_INFO("Turn On Action has been initiated")
     }
-    else if (aAction == LightingManager::OFF_ACTION)
+    else if (aAction == LightingManager::TURNOFF_ACTION)
     {
         NRF_LOG_INFO("Turn Off Action has been initiated")
     }
@@ -516,11 +522,11 @@ void AppTask::ActionCompleted(LightingManager::Action_t aAction)
     // if the action has been completed by the lock, update the bolt lock trait.
     // Turn on the lock LED if in a LOCKED state OR
     // Turn off the lock LED if in an UNLOCKED state.
-    if (aAction == LightingManager::ON_ACTION)
+    if (aAction == LightingManager::TURNON_ACTION)
     {
         NRF_LOG_INFO("Turn On Action has been completed")
     }
-    else if (aAction == LightingManager::OFF_ACTION)
+    else if (aAction == LightingManager::TURNOFF_ACTION)
     {
         NRF_LOG_INFO("Turn Off Action has been completed")
     }
@@ -529,9 +535,10 @@ void AppTask::ActionCompleted(LightingManager::Action_t aAction)
 void AppTask::PostLightingActionRequest(LightingManager::Action_t aAction)
 {
     AppEvent event;
-    event.Type                 = AppEvent::kEventType_Lighting;
+    event.Type              = AppEvent::kEventType_Lighting;
+
     event.LightingEvent.Action = aAction;
-    event.Handler              = LightingActionEventHandler;
+    event.Handler           = LightingActionEventHandler;
     PostEvent(&event);
 }
 
@@ -548,7 +555,6 @@ void AppTask::PostEvent(const AppEvent * aEvent)
 
 void AppTask::DispatchEvent(AppEvent * aEvent)
 {
-
     if (aEvent->Handler)
     {
         aEvent->Handler(aEvent);
@@ -561,13 +567,13 @@ void AppTask::DispatchEvent(AppEvent * aEvent)
 
 void AppTask::UpdateClusterState(void)
 {
-    uint8_t newValue = LightingMgr().IsTurnedOn();
+    uint8_t newValue = !LightingMgr().IsTurnedOff();
 
     // write the new on/off value
     EmberAfStatus status = emberAfWriteAttribute(1, ZCL_ON_OFF_CLUSTER_ID, ZCL_ON_OFF_ATTRIBUTE_ID, CLUSTER_MASK_SERVER,
                                                  (uint8_t *) &newValue, ZCL_BOOLEAN_ATTRIBUTE_TYPE);
     if (status != EMBER_ZCL_STATUS_SUCCESS)
     {
-        NRF_LOG_INFO("ERR: updating on/off %x", status);
+        ChipLogError(NotSpecified, "ERR: updating on/off %" PRIx8, status);
     }
 }
