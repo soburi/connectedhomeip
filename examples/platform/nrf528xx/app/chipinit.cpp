@@ -95,8 +95,8 @@ ret_code_t ChipInit()
 #if CHIP_ENABLE_OPENTHREAD
     NRF_LOG_INFO("Initializing OpenThread stack");
 
-    nrf_cc310_platform_abort_init();
-    nrf_cc310_platform_mutex_init();
+    nrf_cc3xx_platform_abort_init();
+    nrf_cc3xx_platform_mutex_init();
     mbedtls_platform_setup(NULL);
 
     otSysInit(0, NULL);
