@@ -17,9 +17,10 @@
 
 #include <platform/CHIPDeviceConfig.h>
 
-#include <lib/shell/shell.h>
+#include <lib/shell/streamer.h>
 
 #include <lib/core/CHIPCore.h>
+#include <lib/shell/Engine.h>
 #include <lib/support/Base64.h>
 #include <lib/support/CHIPArgParser.hpp>
 #include <lib/support/CodeUtils.h>
@@ -97,11 +98,13 @@ int main()
     }
 
     cmd_misc_init();
-    cmd_base64_init();
-    cmd_device_init();
-    cmd_btp_init();
+//    cmd_base64_init();
+//    cmd_device_init();
+//    cmd_btp_init();
     cmd_otcli_init();
 
-    shell_task(nullptr);
+//    shell_task(nullptr);
+    Engine::Root().RunMainLoop();
+
     return 0;
 }
