@@ -97,4 +97,4 @@
 	branch = main
 [submodule "third_party/openthread/ot-nrf528xx"]
 	path = third_party/openthread/ot-nrf528xx
-	url = https://github.com/openthread/ot-nrf528xx
+	url = https://github.com/soburi/ot-nrf528xx
