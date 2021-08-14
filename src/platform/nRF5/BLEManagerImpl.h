@@ -25,7 +25,7 @@
 
 #pragma once
 
-#if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
+#if 1 //CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
 
 #include "nrf_ble_gatt.h"
 #include "nrf_sdh_ble.h"

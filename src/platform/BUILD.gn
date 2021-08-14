@@ -595,13 +595,13 @@ if (chip_device_platform != "none" && chip_device_platform != "external") {
 
       public_deps += [ "${nrf5_sdk_build_root}:nrf5_sdk" ]
 
-      if (chip_enable_ble) {
+      #if (chip_enable_ble) {
         sources += [
           "nRF5/BLEManagerImpl.cpp",
           "nRF5/BLEManagerImpl.h",
           "nRF5/BlePlatformConfig.h",
         ]
-      }
+      #}
 
       if (chip_enable_openthread) {
         public_deps += [

@@ -24,8 +24,7 @@
 /* this file behaves like a config.h, comes first */
 #include <platform/internal/CHIPDeviceLayerInternal.h>
 
-#if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
-
+#if 1 //CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
 #include <ble/CHIPBleServiceData.h>
 #include <platform/internal/BLEManager.h>
 
