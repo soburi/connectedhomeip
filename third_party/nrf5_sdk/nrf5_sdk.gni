@@ -172,6 +172,9 @@ openthread_nrf5xx_root = "${chip_root}/third_party/openthread/ot-nrf528xx"
     }
 
     sources += [
+      #"${openthread_nrf5xx_root}/third_party/NordicSemiconductor/drivers/clock/nrf_drv_clock.c",
+      "${nrf5_sdk_root}/modules/nrfx/mdk/gcc_startup_nrf52840.S",
+      "${nrf5_sdk_root}/modules/nrfx/mdk/system_nrf52840.c",
       "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/components/libraries/timer/app_timer_freertos.c",
       "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/components/libraries/fstorage/nrf_fstorage.c",
       "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/components/libraries/fstorage/nrf_fstorage_sd.c",
