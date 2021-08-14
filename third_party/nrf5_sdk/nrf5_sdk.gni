@@ -65,6 +65,7 @@ openthread_nrf5xx_root = "${chip_root}/third_party/openthread/ot-nrf528xx"
     "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/config/nrf52840/config",
     "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/dependencies",
     "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/drivers/clock",
+    "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/drivers/gpiote",
     "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/nrfx",
     "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/nrfx/drivers/include",
     "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/nrfx/hal",
@@ -172,8 +173,7 @@ openthread_nrf5xx_root = "${chip_root}/third_party/openthread/ot-nrf528xx"
     }
 
     sources += [
-      "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/libraries/nrf_security/nrf_cc310_plat/src/nrf_cc3xx_platform_abort_freertos.c",
-      "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/libraries/nrf_security/nrf_cc310_plat/src/nrf_cc3xx_platform_mutex_freertos.c",
+      "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/nrfx/drivers/src/nrfx_gpiote.c",
       "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/nrfx/drivers/src/nrfx_clock.c",
       "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/drivers/clock/nrf_drv_clock.c",
       "${nrf5_sdk_root}/modules/nrfx/mdk/gcc_startup_nrf52840.S",
@@ -191,7 +191,7 @@ openthread_nrf5xx_root = "${chip_root}/third_party/openthread/ot-nrf528xx"
       "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/components/libraries/util/app_error.c",
       "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/components/libraries/util/app_error_handler_gcc.c",
       "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/components/libraries/util/app_error_weak.c",
-      #"${openthread_nrf5xx_root}/third_party/NordicSemiconductor/components/libraries/button/app_button.c",
+      "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/components/libraries/button/app_button.c",
       "${openthread_nrf5xx_root}/nrf_802154_sl_platform/tick.c",
       "${nrf5_sdk_root}/external/freertos/portable/CMSIS/nrf52/port_cmsis.c",
       "${nrf5_sdk_root}/external/freertos/portable/CMSIS/nrf52/port_cmsis_systick.c",
@@ -221,6 +221,8 @@ openthread_nrf5xx_root = "${chip_root}/third_party/openthread/ot-nrf528xx"
       "${nrf5_sdk_root}/external/freertos/source/tasks.c",
       "${nrf5_sdk_root}/external/freertos/source/timers.c",
 
+      "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/libraries/nrf_security/nrf_cc310_plat/src/nrf_cc3xx_platform_abort_freertos.c",
+      "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/libraries/nrf_security/nrf_cc310_plat/src/nrf_cc3xx_platform_mutex_freertos.c",
     ]
 
     public_deps = [

@@ -106,8 +106,8 @@ if (use_openthread_radio_driver) {
 }
 
 nrf528xx_radio_driver_common_sources = [
-#  "${nrf5_sdk_root}/examples/multiprotocol/app_utils/multiprotocol_802154_config.c",
-#  "${nrf5_sdk_root}/examples/multiprotocol/app_utils/multiprotocol_802154_config.h",
+  "${nrf5_sdk_root}/examples/multiprotocol/app_utils/multiprotocol_802154_config.c",
+  "${nrf5_sdk_root}/examples/multiprotocol/app_utils/multiprotocol_802154_config.h",
 
   "${nrf528xx_radio_driver_src}/driver/src/nrf_802154_notification_swi.c",
   "${nrf528xx_radio_driver_src}/driver/src/nrf_802154_priority_drop_swi.c",
@@ -175,6 +175,7 @@ config("libnordicsemi_nrf52840_config") {
     "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/config/nrf52840/config",
     "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/dependencies",
     "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/drivers/clock",
+    "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/drivers/gpiote",
     "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/nrfx",
     "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/nrfx/drivers/include",
     "${openthread_nrf5xx_root}/third_party/NordicSemiconductor/nrfx/hal",
