@@ -136,7 +136,7 @@ int main(void)
     nrf_drv_clock_lfclk_request(NULL);
 
     // Wait for the clock to be ready.
-    while (!nrf_clock_lf_is_running())
+    while (!nrf_clock_lf_is_running(NRF_CLOCK))
     {
     }
 
