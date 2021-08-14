@@ -27,12 +27,8 @@
 
 #include <platform/CHIPDeviceEvent.h>
 
-#if 0
-
 #include "ble.h"
 #include "nrf_ble_gatt.h"
-
-#endif
 
 namespace chip {
 namespace DeviceLayer {
@@ -64,7 +60,6 @@ enum InternalPlatformSpecificEventTypes
  */
 struct ChipDevicePlatformEvent final
 {
-#if 0
     union
     {
         struct
@@ -79,9 +74,7 @@ struct ChipDevicePlatformEvent final
             ::chip::System::PacketBuffer * Data;
         } RXCharWriteEvent;
     };
-#endif
 };
 
 } // namespace DeviceLayer
 } // namespace chip
-
