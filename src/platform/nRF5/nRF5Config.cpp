@@ -344,7 +344,7 @@ CHIP_ERROR NRF5Config::WriteConfigValueBin(Key key, const uint8_t * data, size_t
         err = DoAsyncFDSOp(addOrUpdateOp);
         SuccessOrExit(err);
 
-        ChipLogProgress(DeviceLayer, "FDS set: 0x%04" PRIX16 "/0x%04" PRIX16 " = (blob length %" PRId32 ")", GetFileId(key),
+        ChipLogProgress(DeviceLayer, "FDS set: 0x%04" PRIX16 "/0x%04" PRIX16 " = (blob length %" PRIu16 ")", GetFileId(key),
                         GetRecordKey(key), dataLen);
     }
 
