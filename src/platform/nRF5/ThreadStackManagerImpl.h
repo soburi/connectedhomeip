@@ -2,6 +2,7 @@
  *
  *    Copyright (c) 2020 Project CHIP Authors
  *    Copyright (c) 2018 Nest Labs, Inc.
+ *    All rights reserved.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -25,11 +26,10 @@
 
 #pragma once
 
-#include <platform/FreeRTOS/GenericThreadStackManagerImpl_FreeRTOS.h>
-#include <platform/OpenThread/GenericThreadStackManagerImpl_OpenThread_LwIP.h>
-
 #include <openthread/tasklet.h>
 #include <openthread/thread.h>
+#include <platform/FreeRTOS/GenericThreadStackManagerImpl_FreeRTOS.h>
+#include <platform/OpenThread/GenericThreadStackManagerImpl_OpenThread_LwIP.h>
 
 extern "C" void otSysEventSignalPending(void);
 
@@ -72,8 +72,8 @@ public:
 
     using ThreadStackManager::InitThreadStack;
     CHIP_ERROR InitThreadStack(otInstance * otInst);
-    void _OnCHIPoBLEAdvertisingStart(void);
-    void _OnCHIPoBLEAdvertisingStop(void);
+    void _OnWoBLEAdvertisingStart(void);
+    void _OnWoBLEAdvertisingStop(void);
 
 private:
     // ===== Methods that implement the ThreadStackManager abstract interface.

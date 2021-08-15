@@ -2,6 +2,7 @@
  *
  *    Copyright (c) 2020 Project CHIP Authors
  *    Copyright (c) 2019 Google LLC.
+ *    All rights reserved.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -18,7 +19,7 @@
 
 /**
  *    @file
- *          Platform-specific configuration overrides for the Openchip Inet
+ *          Platform-specific configuration overrides for the CHIP Inet
  *          Layer on nRF52 platforms using the Nordic nRF5 SDK.
  *
  */

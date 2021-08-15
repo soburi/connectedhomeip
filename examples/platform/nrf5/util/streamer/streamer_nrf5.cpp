@@ -20,7 +20,7 @@
  *      Source implementation of an input / output stream for stdio targets.
  */
 
-#include <lib/shell/shell.h>
+#include <lib/shell/streamer.h>
 
 #ifdef NRF_SHELL_STREAMER
 

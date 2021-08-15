@@ -2,6 +2,7 @@
  *
  *    Copyright (c) 2020 Project CHIP Authors
  *    Copyright (c) 2018 Nest Labs, Inc.
+ *    All rights reserved.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -28,6 +29,7 @@
 
 #include "nrf_ble_gatt.h"
 #include "nrf_sdh_ble.h"
+
 
 namespace chip {
 namespace DeviceLayer {
@@ -62,6 +64,7 @@ private:
     bool _IsFastAdvertisingEnabled(void);
     CHIP_ERROR _SetFastAdvertisingEnabled(bool val);
     bool _IsAdvertising(void);
+    CHIP_ERROR _SetAdvertisingMode(BLEAdvertisingMode mode);
     CHIP_ERROR _GetDeviceName(char * buf, size_t bufSize);
     CHIP_ERROR _SetDeviceName(const char * deviceName);
     uint16_t _NumConnections(void);
@@ -77,11 +80,11 @@ private:
     bool CloseConnection(BLE_CONNECTION_OBJECT conId) override;
     uint16_t GetMTU(BLE_CONNECTION_OBJECT conId) const override;
     bool SendIndication(BLE_CONNECTION_OBJECT conId, const Ble::ChipBleUUID * svcId, const Ble::ChipBleUUID * charId,
-                        System::PacketBuffer * pBuf) override;
+                        System::PacketBufferHandle pBuf) override;
     bool SendWriteRequest(BLE_CONNECTION_OBJECT conId, const Ble::ChipBleUUID * svcId, const Ble::ChipBleUUID * charId,
-                          System::PacketBuffer * pBuf) override;
+                          System::PacketBufferHandle pBuf) override;
     bool SendReadRequest(BLE_CONNECTION_OBJECT conId, const Ble::ChipBleUUID * svcId, const Ble::ChipBleUUID * charId,
-                         System::PacketBuffer * pBuf) override;
+                         System::PacketBufferHandle pBuf) override;
     bool SendReadResponse(BLE_CONNECTION_OBJECT conId, BLE_READ_REQUEST_CONTEXT requestContext, const Ble::ChipBleUUID * svcId,
                           const Ble::ChipBleUUID * charId) override;
 
@@ -98,15 +101,16 @@ private:
 
     // ===== Private members reserved for use by this class only.
 
-    enum
+    enum class Flags : uint8_t
     {
-        kFlag_AsyncInitCompleted     = 0x0001, /**< One-time asynchronous initialization actions have been performed. */
-        kFlag_AdvertisingEnabled     = 0x0002, /**< The application has enabled CHIPoBLE advertising. */
-        kFlag_FastAdvertisingEnabled = 0x0004, /**< The application has enabled fast advertising. */
-        kFlag_Advertising            = 0x0008, /**< The system is currently CHIPoBLE advertising. */
-        kFlag_AdvertisingRefreshNeeded =
+        kAsyncInitCompleted     = 0x0001, /**< One-time asynchronous initialization actions have been performed. */
+        kAdvertisingEnabled     = 0x0002, /**< The application has enabled CHIPoBLE advertising. */
+        kFastAdvertisingEnabled = 0x0004, /**< The application has enabled fast advertising. */
+        kAdvertising            = 0x0008, /**< The system is currently CHIPoBLE advertising. */
+        kAdvertisingRefreshNeeded =
             0x0010, /**< The advertising state/configuration has changed, but the SoftDevice has yet to be updated. */
     };
+    BitFlags<BLEManagerImpl::Flags> mFlags;
 
     enum
     {
@@ -118,7 +122,6 @@ private:
     ble_gatts_char_handles_t mCHIPoBLECharHandle_RX;
     ble_gatts_char_handles_t mCHIPoBLECharHandle_TX;
     CHIPoBLEServiceMode mServiceMode;
-    uint16_t mFlags;
     uint16_t mNumGAPCons;
     uint16_t mSubscribedConIds[kMaxConnections];
     uint8_t mAdvHandle;
@@ -188,17 +191,17 @@ inline BLEManager::CHIPoBLEServiceMode BLEManagerImpl::_GetCHIPoBLEServiceMode(v
 
 inline bool BLEManagerImpl::_IsAdvertisingEnabled(void)
 {
-    return GetFlag(mFlags, kFlag_AdvertisingEnabled);
+    return mFlags.Has(Flags::kAdvertisingEnabled);
 }
 
 inline bool BLEManagerImpl::_IsFastAdvertisingEnabled(void)
 {
-    return GetFlag(mFlags, kFlag_FastAdvertisingEnabled);
+    return mFlags.Has(Flags::kFastAdvertisingEnabled);
 }
 
 inline bool BLEManagerImpl::_IsAdvertising(void)
 {
-    return GetFlag(mFlags, kFlag_Advertising);
+    return mFlags.Has(Flags::kAdvertising);
 }
 
 } // namespace Internal

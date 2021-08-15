@@ -75,6 +75,8 @@ public:
     static constexpr uint16_t kFileId_ChipCounter = 0x235C; /**< FDS file containing dynamic counter values set at runtime.
                                                              *   Retained during factory reset. */
 
+    static constexpr uint16_t kFileId_KVS = 0x1234;
+
     // API data type used to represent the combination of a FDS file id and record key.
     using Key = uint32_t;
 
@@ -100,6 +102,14 @@ public:
     static constexpr Key kConfigKey_OperationalDeviceICACerts   = NRF5ConfigKey(kFileId_ChipConfig, 0x0013);
     static constexpr Key kConfigKey_OperationalDevicePrivateKey = NRF5ConfigKey(kFileId_ChipConfig, 0x0014);
     static constexpr Key kConfigKey_SetupDiscriminator          = NRF5ConfigKey(kFileId_ChipFactory, 0x0015);
+
+    static constexpr Key kConfigKey_RegulatoryLocation          = NRF5ConfigKey(kFileId_ChipFactory, 0x0016);
+    static constexpr Key kConfigKey_CountryCode                 = NRF5ConfigKey(kFileId_ChipFactory, 0x0017);
+    static constexpr Key kConfigKey_Breadcrumb                  = NRF5ConfigKey(kFileId_ChipFactory, 0x0018);
+
+    static constexpr Key kMinConfigKey_KVS         = NRF5ConfigKey(kFileId_KVS, 0x00);
+    static constexpr Key kMaxConfigKey_KVS         = NRF5ConfigKey(kFileId_KVS, 0xFF);
+
 
     // Range of FDS record keys used to store CHIP persisted counter values.
     static constexpr uint16_t kPersistedCounterRecordKeyBase = kFDSRecordKeyMin;
