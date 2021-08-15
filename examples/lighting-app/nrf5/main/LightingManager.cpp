@@ -19,13 +19,14 @@
 
 #include "LightingManager.h"
 
-#include "app_config.h"
 #include "app_timer.h"
 #include "boards.h"
 #include "nrf_log.h"
 
 #include "AppTask.h"
 #include "FreeRTOS.h"
+
+#include "app_config.h"
 
 LightingManager LightingManager::sLight;
 
@@ -42,47 +43,44 @@ int LightingManager::Init(uint32_t gpioNum)
     return NRF_SUCCESS;
 }
 
-bool LightingManager::IsTurnedOn()
-{
-    return mState == kState_On;
-}
 
-void LightingManager::SetCallbacks(LightingCallback_fn aActionInitiated_CB, LightingCallback_fn aActionCompleted_CB)
+void LightingManager::SetCallbacks(Callback_fn_initiated aActionInitiated_CB, Callback_fn_completed aActionCompleted_CB)
 {
     mActionInitiated_CB = aActionInitiated_CB;
     mActionCompleted_CB = aActionCompleted_CB;
 }
 
-bool LightingManager::InitiateAction(Action_t aAction)
+bool LightingManager::IsTurnedOff()
 {
-    // TODO: this function is called InitiateAction because we want to implement some features such as ramping up here.
+    return mState != kState_On;
+}
+
+bool LightingManager::InitiateAction(int32_t aActor, Action_t aAction)
+{
     bool action_initiated = false;
     State_t new_state;
 
-    // Initiate On/Off Action only when the previous one is complete.
-    if (mState == kState_Off && aAction == ON_ACTION)
+    // Initiate ON/OFF Action only when the previous one is complete.
+    if (mState == kState_Off && aAction == TURNON_ACTION)
     {
         action_initiated = true;
-        new_state        = kState_On;
+
+        new_state = kState_On;
     }
-    else if (mState == kState_On && aAction == OFF_ACTION)
+    else if (mState == kState_On && aAction == TURNON_ACTION)
     {
         action_initiated = true;
-        new_state        = kState_Off;
+
+        new_state = kState_Off;
     }
 
     if (action_initiated)
     {
-        if (mActionInitiated_CB)
-        {
-            mActionInitiated_CB(aAction);
-        }
-
         Set(new_state == kState_On);
 
-        if (mActionCompleted_CB)
+        if (mActionInitiated_CB)
         {
-            mActionCompleted_CB(aAction);
+            mActionInitiated_CB(aAction, aActor);
         }
     }
 

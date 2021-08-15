@@ -42,7 +42,7 @@ private:
 
     int Init();
 
-    static void ActionInitiated(LightingManager::Action_t aAction);
+    static void ActionInitiated(LightingManager::Action_t aAction, int32_t aActor);
     static void ActionCompleted(LightingManager::Action_t aAction);
 
     void CancelTimer(void);
