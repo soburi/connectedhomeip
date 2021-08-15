@@ -19,12 +19,13 @@
 
 #include "BoltLockManager.h"
 
-#include "app_config.h"
 #include "app_timer.h"
 #include "nrf_log.h"
 
 #include "AppTask.h"
 #include "FreeRTOS.h"
+
+#include "app_config.h"
 
 BoltLockManager BoltLockManager::sLock;
 
@@ -136,13 +137,14 @@ void BoltLockManager::CancelTimer(void)
     ret = app_timer_stop(sLockTimer);
     if (ret != NRF_SUCCESS)
     {
-        NRF_LOG_INFO("app_timer_stop() failed");
+        NRF_LOG_INFO("lock timer stop() failed");
         APP_ERROR_HANDLER(ret);
     }
 }
 
 void BoltLockManager::TimerEventHandler(void * p_context)
 {
+    // Get lock obj context from timer id.
     BoltLockManager * lock = static_cast<BoltLockManager *>(p_context);
 
     // The timer event handler will be called in the context of the timer task
@@ -150,16 +152,18 @@ void BoltLockManager::TimerEventHandler(void * p_context)
     // so that the event can be handled in the context of the apptask.
     AppEvent event;
     event.Type               = AppEvent::kEventType_Timer;
-    event.TimerEvent.Context = p_context;
+    event.TimerEvent.Context = lock;
+
     if (lock->mAutoLockTimerArmed)
     {
         event.Handler = AutoReLockTimerEventHandler;
+        GetAppTask().PostEvent(&event);
     }
     else
     {
         event.Handler = ActuatorMovementTimerEventHandler;
+        GetAppTask().PostEvent(&event);
     }
-    GetAppTask().PostEvent(&event);
 }
 
 void BoltLockManager::AutoReLockTimerEventHandler(AppEvent * aEvent)

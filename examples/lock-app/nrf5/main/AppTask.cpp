@@ -16,42 +16,46 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
 #include "AppTask.h"
 #include "AppEvent.h"
-#include "LEDWidget.h"
-#include "Server.h"
-#include "Service.h"
+#include "support/ErrorStr.h"
+#include <app/server/Server.h>
 
+#include <app/server/OnboardingCodesUtil.h>
+
+#include "Service.h"
 #include "app_button.h"
-#include "app_config.h"
 #include "app_timer.h"
 #include "boards.h"
-
 #include "nrf_log.h"
-
 #include "FreeRTOS.h"
-
-#include <platform/CHIPDeviceLayer.h>
 #if CHIP_ENABLE_OPENTHREAD
 #include <platform/OpenThread/OpenThreadUtils.h>
 #include <platform/ThreadStackManager.h>
-#include <platform/internal/DeviceNetworkInfo.h>
 #include <platform/nRF5/ThreadStackManagerImpl.h>
 #endif
-#include <support/ErrorStr.h>
-#include <system/SystemClock.h>
-
 #include <setup_payload/QRCodeSetupPayloadGenerator.h>
 #include <setup_payload/SetupPayload.h>
-
+#include <system/SystemClock.h>
 #include <lib/support/logging/CHIPLogging.h>
 
-#define FACTORY_RESET_TRIGGER_TIMEOUT 3000
+#include <platform/CHIPDeviceLayer.h>
+#include <platform/internal/DeviceNetworkInfo.h>
+#include <support/ThreadOperationalDataset.h>
+
+#include <app/common/gen/attribute-id.h>
+#include <app/common/gen/attribute-type.h>
+#include <app/common/gen/cluster-id.h>
+#include <app/util/attribute-storage.h>
+
+#include "LEDWidget.h"
+#include "app_config.h"
+
+constexpr uint32_t kFactoryResetTriggerTimeout = 6000;
+constexpr uint8_t kAppEventQueueSize           = 10;
 #define FACTORY_RESET_CANCEL_WINDOW_TIMEOUT 3000
 #define APP_TASK_STACK_SIZE (4096)
 #define APP_TASK_PRIORITY 2
-#define APP_EVENT_QUEUE_SIZE 10
 
 APP_TIMER_DEF(sFunctionTimer);
 
@@ -62,10 +66,6 @@ static QueueHandle_t sAppEventQueue;
 
 static LEDWidget sStatusLED;
 static LEDWidget sLockLED;
-static LEDWidget sUnusedLED;
-static LEDWidget sUnusedLED_1;
-
-static LEDWidget sLockStatusLED;
 
 static bool sIsThreadProvisioned     = false;
 static bool sIsThreadEnabled         = false;
@@ -74,35 +74,39 @@ static bool sIsPairedToAccount       = false;
 static bool sHaveBLEConnections      = false;
 static bool sHaveServiceConnectivity = false;
 
+#if CHIP_DEVICE_CONFIG_THREAD_ENABLE_CLI
+extern "C" void nrf5UartProcess(void);
+#endif
+
 using namespace ::chip::DeviceLayer;
 
 AppTask AppTask::sAppTask;
 
 int AppTask::StartAppTask()
 {
-    ret_code_t ret = NRF_SUCCESS;
+    ret_code_t err = NRF_SUCCESS;
 
-    sAppEventQueue = xQueueCreate(APP_EVENT_QUEUE_SIZE, sizeof(AppEvent));
+    sAppEventQueue = xQueueCreate(kAppEventQueueSize, sizeof(AppEvent));
     if (sAppEventQueue == NULL)
     {
         NRF_LOG_INFO("Failed to allocate app event queue");
-        ret = NRF_ERROR_NULL;
-        APP_ERROR_HANDLER(ret);
+        err = NRF_ERROR_NULL;
+        APP_ERROR_HANDLER(err);
     }
 
     // Start App task.
     if (xTaskCreate(AppTaskMain, "APP", APP_TASK_STACK_SIZE / sizeof(StackType_t), NULL, APP_TASK_PRIORITY, &sAppTaskHandle) !=
         pdPASS)
     {
-        ret = NRF_ERROR_NULL;
+        err = NRF_ERROR_NULL;
     }
 
-    return ret;
+    return err;
 }
 
 int AppTask::Init()
 {
-    ret_code_t ret;
+    ret_code_t ret = NRF_SUCCESS;
 
     // Init ZCL Data Model and start server
     InitServer();
@@ -113,16 +117,10 @@ int AppTask::Init()
     sLockLED.Init(LOCK_STATE_LED);
     sLockLED.Set(!BoltLockMgr().IsUnlocked());
 
-    sLockStatusLED.Init(LOCK_STATE_LED_GPIO);
-    sLockStatusLED.Set(!BoltLockMgr().IsUnlocked());
-
-    sUnusedLED.Init(BSP_LED_2);
-    sUnusedLED_1.Init(BSP_LED_3);
-
     // Initialize buttons
     static app_button_cfg_t sButtons[] = {
         { LOCK_BUTTON, APP_BUTTON_ACTIVE_LOW, BUTTON_PULL, ButtonEventHandler },
-        { FUNCTION_BUTTON, APP_BUTTON_ACTIVE_LOW, BUTTON_PULL, ButtonEventHandler },
+        { RESET_BUTTON, APP_BUTTON_ACTIVE_LOW, BUTTON_PULL, ButtonEventHandler },
 #if CHIP_ENABLE_OPENTHREAD
         { JOIN_BUTTON, APP_BUTTON_ACTIVE_LOW, BUTTON_PULL, ButtonEventHandler },
 #endif
@@ -154,14 +152,14 @@ int AppTask::Init()
     if (ret != NRF_SUCCESS)
     {
         NRF_LOG_INFO("app_timer_create() failed");
-        APP_ERROR_HANDLER(ret);
+        assert(ret == CHIP_NO_ERROR);
     }
 
     ret = BoltLockMgr().Init();
-    if (ret != NRF_SUCCESS)
+    if (ret != CHIP_NO_ERROR)
     {
         NRF_LOG_INFO("BoltLockMgr().Init() failed");
-        APP_ERROR_HANDLER(ret);
+        assert(ret == CHIP_NO_ERROR);
     }
 
     BoltLockMgr().SetCallbacks(ActionInitiated, ActionCompleted);
@@ -170,7 +168,7 @@ int AppTask::Init()
     if (sCHIPEventLock == NULL)
     {
         NRF_LOG_INFO("xSemaphoreCreateMutex() failed");
-        APP_ERROR_HANDLER(NRF_ERROR_NULL);
+        assert(ret == CHIP_NO_ERROR);
     }
 
     {
@@ -215,7 +213,7 @@ int AppTask::Init()
         // TODO: Usage of STL will significantly increase the image size, this should be changed to more efficient method for
         // generating payload
         std::string result;
-        err = generator.payloadBase41Representation(result);
+        err = generator.payloadBase38Representation(result);
         if (err != CHIP_NO_ERROR)
         {
             NRF_LOG_INFO("Failed to generate QR Code");
@@ -231,15 +229,15 @@ int AppTask::Init()
 
 void AppTask::AppTaskMain(void * pvParameter)
 {
-    ret_code_t ret;
+    int err;
     AppEvent event;
     uint64_t mLastChangeTimeUS = 0;
 
-    ret = sAppTask.Init();
-    if (ret != NRF_SUCCESS)
+    err = sAppTask.Init();
+    if (err != CHIP_NO_ERROR)
     {
-        NRF_LOG_INFO("AppTask.Init() failed: %s", chip::ErrorStr(ret));
-        APP_ERROR_HANDLER(ret);
+        NRF_LOG_INFO("AppTask.Init() failed: %s", chip::ErrorStr(err));
+        assert(err == CHIP_NO_ERROR);
     }
 
     SetDeviceName("LockDemo._chip._udp.local.");
@@ -268,10 +266,6 @@ void AppTask::AppTaskMain(void * pvParameter)
             PlatformMgr().UnlockChipStack();
         }
 
-        // Consider the system to be "fully connected" if it has service
-        // connectivity and it is able to interact with the service on a regular basis.
-        bool isFullyConnected = sHaveServiceConnectivity;
-
         // Update the status LED if factory reset has not been initiated.
         //
         // If system has "full connectivity", keep the LED On constantly.
@@ -286,11 +280,11 @@ void AppTask::AppTaskMain(void * pvParameter)
         // Otherwise, blink the LED ON for a very short time.
         if (sAppTask.mFunction != kFunction_FactoryReset)
         {
-            if (isFullyConnected)
+            if (sHaveServiceConnectivity)
             {
                 sStatusLED.Set(true);
             }
-            else if (sIsThreadProvisioned && sIsThreadEnabled && sIsPairedToAccount && (!sIsThreadAttached || !isFullyConnected))
+            else if (sIsThreadProvisioned && sIsThreadEnabled && sIsPairedToAccount && (!sIsThreadAttached || !sHaveServiceConnectivity))
             {
                 sStatusLED.Blink(950, 50);
             }
@@ -306,11 +300,7 @@ void AppTask::AppTaskMain(void * pvParameter)
 
         sStatusLED.Animate();
         sLockLED.Animate();
-        sUnusedLED.Animate();
-        sUnusedLED_1.Animate();
 
-        sLockStatusLED.Set(!BoltLockMgr().IsUnlocked());
-        sLockStatusLED.Animate();
 
         uint64_t nowUS            = chip::System::Platform::Layer::GetClock_Monotonic();
         uint64_t nextChangeTimeUS = mLastChangeTimeUS + 5 * 1000 * 1000UL;
@@ -323,12 +313,134 @@ void AppTask::AppTaskMain(void * pvParameter)
     }
 }
 
+void AppTask::ButtonEventHandler(uint8_t pin_no, uint8_t button_action)
+{
+    if (pin_no != LOCK_BUTTON
+#if CHIP_ENABLE_OPENTHREAD
+        && pin_no != JOIN_BUTTON
+#endif
+        && pin_no != RESET_BUTTON)
+    {
+        return;
+    }
+
+    AppEvent button_event           = {};
+    button_event.Type               = AppEvent::kEventType_Button;
+    button_event.ButtonEvent.PinNo  = pin_no;
+    button_event.ButtonEvent.Action = button_action;
+
+    if (pin_no == LOCK_BUTTON && button_action == APP_BUTTON_PUSH)
+    {
+        button_event.Handler = LockActionEventHandler;
+    }
+    else if (pin_no == RESET_BUTTON)
+    {
+        button_event.Handler = ResetActionEventHandler;
+    }
+#if CHIP_ENABLE_OPENTHREAD
+    else if (pin_no == JOIN_BUTTON && button_action == APP_BUTTON_RELEASE)
+    {
+        button_event.Handler = JoinHandler;
+    }
+#endif
+    else
+    {
+        return;
+    }
+
+    sAppTask.PostEvent(&button_event);
+}
+
+
+
+void AppTask::TimerEventHandler(void * p_context)
+{
+    AppEvent event;
+    event.Type               = AppEvent::kEventType_Timer;
+    event.TimerEvent.Context = p_context;
+    event.Handler            = FunctionTimerEventHandler;
+    sAppTask.PostEvent(&event);
+}
+
+void AppTask::FunctionTimerEventHandler(AppEvent * aEvent)
+{
+    if (aEvent->Type != AppEvent::kEventType_Timer)
+        return;
+
+    // If we reached here, the button was held past FACTORY_RESET_TRIGGER_TIMEOUT, initiate factory reset
+    if (sAppTask.mResetTimerActive && sAppTask.mFunction == kFunction_SoftwareUpdate)
+    {
+        NRF_LOG_INFO("Factory Reset Triggered. Release button within %ums to cancel.", kFactoryResetTriggerTimeout);
+
+        // Start timer for FACTORY_RESET_CANCEL_WINDOW_TIMEOUT to allow user to cancel, if required.
+        sAppTask.StartTimer(FACTORY_RESET_CANCEL_WINDOW_TIMEOUT);
+
+        sAppTask.mFunction = kFunction_FactoryReset;
+
+        // Turn off all LEDs before starting blink to make sure blink is co-ordinated.
+        sStatusLED.Set(false);
+        sLockLED.Set(false);
+
+        sStatusLED.Blink(500);
+        sLockLED.Blink(500);
+    }
+    else if (sAppTask.mResetTimerActive && sAppTask.mFunction == kFunction_FactoryReset)
+    {
+        // Actually trigger Factory Reset
+        sAppTask.mFunction = kFunction_NoneSelected;
+        ConfigurationMgr().InitiateFactoryReset();
+    }
+}
+
+void AppTask::ResetActionEventHandler(AppEvent * aEvent)
+{
+    if (aEvent->ButtonEvent.PinNo != RESET_BUTTON)
+        return;
+
+    // To trigger software update: press the RESET_BUTTON button briefly (< FACTORY_RESET_TRIGGER_TIMEOUT)
+    // To initiate factory reset: press the RESET_BUTTON for FACTORY_RESET_TRIGGER_TIMEOUT + FACTORY_RESET_CANCEL_WINDOW_TIMEOUT
+    // All LEDs start blinking after FACTORY_RESET_TRIGGER_TIMEOUT to signal factory reset has been initiated.
+    // To cancel factory reset: release the RESET_BUTTON once all LEDs start blinking within the
+    // FACTORY_RESET_CANCEL_WINDOW_TIMEOUT
+    if (aEvent->ButtonEvent.Action == APP_BUTTON_PUSH)
+    {
+        if (!sAppTask.mResetTimerActive && sAppTask.mFunction == kFunction_NoneSelected)
+        {
+            sAppTask.StartTimer(kFactoryResetTriggerTimeout);
+
+            sAppTask.mFunction = kFunction_SoftwareUpdate;
+        }
+    }
+    else
+    {
+        // If the button was released before factory reset got initiated, trigger a software update.
+        if (sAppTask.mResetTimerActive && sAppTask.mFunction == kFunction_SoftwareUpdate)
+        {
+            sAppTask.CancelTimer();
+            sAppTask.mFunction = kFunction_NoneSelected;
+            NRF_LOG_INFO("Software update is not implemented");
+        }
+        else if (sAppTask.mResetTimerActive && sAppTask.mFunction == kFunction_FactoryReset)
+        {
+            // Set lock status LED back to show state of lock.
+            sLockLED.Set(!BoltLockMgr().IsUnlocked());
+
+            sAppTask.CancelTimer();
+
+            // Change the function to none selected since factory reset has been canceled.
+            sAppTask.mFunction = kFunction_NoneSelected;
+
+            NRF_LOG_INFO("Factory Reset has been Canceled");
+        }
+    }
+}
+
 void AppTask::LockActionEventHandler(AppEvent * aEvent)
 {
-    bool initiated = false;
     BoltLockManager::Action_t action;
+    int err        = CHIP_NO_ERROR;
     int32_t actor  = 0;
-    ret_code_t ret = NRF_SUCCESS;
+    bool initiated = false;
 
     if (aEvent->Type == AppEvent::kEventType_Lock)
     {
@@ -348,10 +460,10 @@ void AppTask::LockActionEventHandler(AppEvent * aEvent)
     }
     else
     {
-        ret = NRF_ERROR_NULL;
+        err = CHIP_ERROR_INTERNAL;
     }
 
-    if (ret == NRF_SUCCESS)
+    if (err == CHIP_NO_ERROR)
     {
         initiated = BoltLockMgr().InitiateAction(actor, action);
 
@@ -373,133 +485,6 @@ void AppTask::JoinHandler(AppEvent * aEvent)
 }
 #endif
 
-void AppTask::ButtonEventHandler(uint8_t pin_no, uint8_t button_action)
-{
-    if (pin_no != LOCK_BUTTON
-#if CHIP_ENABLE_OPENTHREAD
-        && pin_no != JOIN_BUTTON
-#endif
-        && pin_no != FUNCTION_BUTTON)
-    {
-        return;
-    }
-
-    AppEvent button_event           = {};
-    button_event.Type               = AppEvent::kEventType_Button;
-    button_event.ButtonEvent.PinNo  = pin_no;
-    button_event.ButtonEvent.Action = button_action;
-
-    if (pin_no == LOCK_BUTTON && button_action == APP_BUTTON_PUSH)
-    {
-        button_event.Handler = LockActionEventHandler;
-    }
-    else if (pin_no == FUNCTION_BUTTON)
-    {
-        button_event.Handler = FunctionHandler;
-    }
-#if CHIP_ENABLE_OPENTHREAD
-    else if (pin_no == JOIN_BUTTON && button_action == APP_BUTTON_RELEASE)
-    {
-        button_event.Handler = JoinHandler;
-    }
-#endif
-    else
-    {
-        return;
-    }
-
-    sAppTask.PostEvent(&button_event);
-}
-
-void AppTask::TimerEventHandler(void * p_context)
-{
-    AppEvent event;
-    event.Type               = AppEvent::kEventType_Timer;
-    event.TimerEvent.Context = p_context;
-    event.Handler            = FunctionTimerEventHandler;
-    sAppTask.PostEvent(&event);
-}
-
-void AppTask::FunctionTimerEventHandler(AppEvent * aEvent)
-{
-    if (aEvent->Type != AppEvent::kEventType_Timer)
-        return;
-
-    // If we reached here, the button was held past FACTORY_RESET_TRIGGER_TIMEOUT, initiate factory reset
-    if (sAppTask.mFunctionTimerActive && sAppTask.mFunction == kFunction_SoftwareUpdate)
-    {
-        NRF_LOG_INFO("Factory Reset Triggered. Release button within %ums to cancel.", FACTORY_RESET_TRIGGER_TIMEOUT);
-
-        // Start timer for FACTORY_RESET_CANCEL_WINDOW_TIMEOUT to allow user to cancel, if required.
-        sAppTask.StartTimer(FACTORY_RESET_CANCEL_WINDOW_TIMEOUT);
-
-        sAppTask.mFunction = kFunction_FactoryReset;
-
-        // Turn off all LEDs before starting blink to make sure blink is co-ordinated.
-        sStatusLED.Set(false);
-        sLockLED.Set(false);
-        sUnusedLED_1.Set(false);
-        sUnusedLED.Set(false);
-
-        sStatusLED.Blink(500);
-        sLockLED.Blink(500);
-        sUnusedLED.Blink(500);
-        sUnusedLED_1.Blink(500);
-    }
-    else if (sAppTask.mFunctionTimerActive && sAppTask.mFunction == kFunction_FactoryReset)
-    {
-        // Actually trigger Factory Reset
-        sAppTask.mFunction = kFunction_NoneSelected;
-        ConfigurationMgr().InitiateFactoryReset();
-    }
-}
-
-void AppTask::FunctionHandler(AppEvent * aEvent)
-{
-    if (aEvent->ButtonEvent.PinNo != FUNCTION_BUTTON)
-        return;
-
-    // To trigger software update: press the FUNCTION_BUTTON button briefly (< FACTORY_RESET_TRIGGER_TIMEOUT)
-    // To initiate factory reset: press the FUNCTION_BUTTON for FACTORY_RESET_TRIGGER_TIMEOUT + FACTORY_RESET_CANCEL_WINDOW_TIMEOUT
-    // All LEDs start blinking after FACTORY_RESET_TRIGGER_TIMEOUT to signal factory reset has been initiated.
-    // To cancel factory reset: release the FUNCTION_BUTTON once all LEDs start blinking within the
-    // FACTORY_RESET_CANCEL_WINDOW_TIMEOUT
-    if (aEvent->ButtonEvent.Action == APP_BUTTON_PUSH)
-    {
-        if (!sAppTask.mFunctionTimerActive && sAppTask.mFunction == kFunction_NoneSelected)
-        {
-            sAppTask.StartTimer(FACTORY_RESET_TRIGGER_TIMEOUT);
-
-            sAppTask.mFunction = kFunction_SoftwareUpdate;
-        }
-    }
-    else
-    {
-        // If the button was released before factory reset got initiated, trigger a software update.
-        if (sAppTask.mFunctionTimerActive && sAppTask.mFunction == kFunction_SoftwareUpdate)
-        {
-            sAppTask.CancelTimer();
-            sAppTask.mFunction = kFunction_NoneSelected;
-            NRF_LOG_INFO("Software update is not implemented");
-        }
-        else if (sAppTask.mFunctionTimerActive && sAppTask.mFunction == kFunction_FactoryReset)
-        {
-            sUnusedLED.Set(false);
-            sUnusedLED_1.Set(false);
-
-            // Set lock status LED back to show state of lock.
-            sLockLED.Set(!BoltLockMgr().IsUnlocked());
-
-            sAppTask.CancelTimer();
-
-            // Change the function to none selected since factory reset has been canceled.
-            sAppTask.mFunction = kFunction_NoneSelected;
-
-            NRF_LOG_INFO("Factory Reset has been Canceled");
-        }
-    }
-}
-
 void AppTask::CancelTimer()
 {
     ret_code_t ret;
@@ -511,7 +496,7 @@ void AppTask::CancelTimer()
         APP_ERROR_HANDLER(ret);
     }
 
-    mFunctionTimerActive = false;
+    mResetTimerActive = false;
 }
 
 void AppTask::StartTimer(uint32_t aTimeoutInMs)
@@ -525,7 +510,7 @@ void AppTask::StartTimer(uint32_t aTimeoutInMs)
         APP_ERROR_HANDLER(ret);
     }
 
-    mFunctionTimerActive = true;
+    mResetTimerActive = true;
 }
 
 void AppTask::ActionInitiated(BoltLockManager::Action_t aAction, int32_t aActor)
@@ -552,13 +537,11 @@ void AppTask::ActionCompleted(BoltLockManager::Action_t aAction)
     if (aAction == BoltLockManager::LOCK_ACTION)
     {
         NRF_LOG_INFO("Lock Action has been completed");
-
         sLockLED.Set(true);
     }
     else if (aAction == BoltLockManager::UNLOCK_ACTION)
     {
         NRF_LOG_INFO("Unlock Action has been completed");
-
         sLockLED.Set(false);
     }
 }
@@ -593,5 +576,18 @@ void AppTask::DispatchEvent(AppEvent * aEvent)
     else
     {
         NRF_LOG_INFO("Event received with no handler. Dropping event.");
+    }
+}
+
+void AppTask::UpdateClusterState(void)
+{
+    uint8_t newValue = !BoltLockMgr().IsUnlocked();
+
+    // write the new on/off value
+    EmberAfStatus status = emberAfWriteAttribute(1, ZCL_ON_OFF_CLUSTER_ID, ZCL_ON_OFF_ATTRIBUTE_ID, CLUSTER_MASK_SERVER,
+                                                 (uint8_t *) &newValue, ZCL_BOOLEAN_ATTRIBUTE_TYPE);
+    if (status != EMBER_ZCL_STATUS_SUCCESS)
+    {
+        ChipLogError(NotSpecified, "ERR: updating on/off %" PRIx8, status);
     }
 }
