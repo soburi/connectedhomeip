@@ -91,6 +91,7 @@ CHIP_ERROR DNSResolver::Resolve(const char * hostName, uint16_t hostNameLen, uin
                                 IPAddress * addrArray, DNSResolver::OnResolveCompleteFunct onComplete, void * appState)
 {
     CHIP_ERROR res = CHIP_NO_ERROR;
+    (void)res;
 
 #if !CHIP_SYSTEM_CONFIG_USE_SOCKETS && !LWIP_DNS
     Release();
