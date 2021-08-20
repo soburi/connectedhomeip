@@ -27,7 +27,9 @@
 
 // Disable the Nordic-supplied OpenThread logging facilities and use
 // the facilities provided by the CHIP Device Layer
-#define OPENTHREAD_CONFIG_LOG_OUTPUT OPENTHREAD_CONFIG_LOG_OUTPUT_APP
+//#define OPENTHREAD_CONFIG_LOG_OUTPUT OPENTHREAD_CONFIG_LOG_OUTPUT_APP
+
+#include "gen_ot_config.h"
 
 // When operating in a less than ideal RF environment, having a more forgiving configuration
 // of OpenThread makes thread a great deal more reliable.
@@ -44,10 +46,10 @@
 // Use smaller maximum interval to speed up reattaching.
 #define OPENTHREAD_CONFIG_MLE_ATTACH_BACKOFF_MAXIMUM_INTERVAL (60 * 10 * 1000) // default 1200000 ms
 
-#define OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE 0
-#define OPENTHREAD_CONFIG_JOINER_ENABLE 1
-#define OPENTHREAD_CONFIG_NCP_HDLC_ENABLE 1
-#define OPENTHREAD_CONFIG_IP6_SLAAC_ENABLE 1
+//#define OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE 0
+//#define OPENTHREAD_CONFIG_JOINER_ENABLE 1
+//#define OPENTHREAD_CONFIG_NCP_HDLC_ENABLE 1
+//#define OPENTHREAD_CONFIG_IP6_SLAAC_ENABLE 1
 
 // overly large numbers consume too many memory, especially when the device are
 // not intended to process large traffic
