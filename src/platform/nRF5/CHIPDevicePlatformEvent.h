@@ -27,8 +27,10 @@
 
 #include <platform/CHIPDeviceEvent.h>
 
+#if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
 #include "ble.h"
 #include "nrf_ble_gatt.h"
+#endif
 
 namespace chip {
 namespace DeviceLayer {
@@ -60,6 +62,7 @@ enum InternalPlatformSpecificEventTypes
  */
 struct ChipDevicePlatformEvent final
 {
+#if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
     union
     {
         struct
@@ -74,6 +77,7 @@ struct ChipDevicePlatformEvent final
             ::chip::System::PacketBuffer * Data;
         } RXCharWriteEvent;
     };
+#endif
 };
 
 } // namespace DeviceLayer

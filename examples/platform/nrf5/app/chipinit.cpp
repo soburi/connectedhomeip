@@ -5,7 +5,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "boards.h"
 #include "nrf_delay.h"
 #include "nrf_log.h"
 #ifdef SOFTDEVICE_PRESENT
@@ -17,7 +16,6 @@
 #if NRF_CRYPTO_ENABLED
 #include "nrf_crypto.h"
 #endif
-#include "mem_manager.h"
 #if CHIP_ENABLE_OPENTHREAD
 extern "C" {
 #include "multiprotocol_802154_config.h"
