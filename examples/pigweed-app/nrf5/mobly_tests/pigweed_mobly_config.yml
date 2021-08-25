@@ -12,27 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//build_overrides/chip.gni")
-
-import("//build/toolchain/arm_gcc/arm_toolchain.gni")
-
-arm_toolchain("nrf5_lock_app") {
-  toolchain_args = {
-    current_os = "freertos"
-    import("${chip_root}/examples/lock-app/nrf5/args.gni")
-  }
-}
-
-arm_toolchain("nrf5_lighting_app") {
-  toolchain_args = {
-    current_os = "freertos"
-    import("${chip_root}/examples/lighting-app/nrf5/args.gni")
-  }
-}
-
-arm_toolchain("nrf5_pigweed_app") {
-  toolchain_args = {
-    current_os = "freertos"
-    import("${chip_root}/examples/pigweed-app/nrf5/args.gni")
-  }
-}
+TestBeds:
+    # A test bed where pw_rpc will find a CHIP device
+    - Name: SampleTestBed
+      Controllers:
+          PigweedDevice:
+              - device_tty: /dev/ttyACM0
+                baud: 115200
+                platform_module: nrf5_firmware_utils
+                platform_args:
+                    - application: chip-nrf52840-pigweed-example.hex
+                      softdevice: s140_nrf52_7.0.1_softdevice.hex
