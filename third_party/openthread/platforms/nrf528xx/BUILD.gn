@@ -208,10 +208,10 @@ static_library("libnordicsemi_nrf52840_radio_driver_softdevice") {
 
   buildconfig_header("openthread_core_buildconfig") {
     defines = []
-    header = "gen_ot_config.h"
-    if (openthread_config_file != "") {
-      header = openthread_config_file
-    }
+    header = "openthread-project-core-config.h"
+    #if (openthread_config_file != "") {
+    #  header = openthread_config_file
+    #}
     header_dir = "./"
 
     if (openthread_config_thread_version == "1.1") {
