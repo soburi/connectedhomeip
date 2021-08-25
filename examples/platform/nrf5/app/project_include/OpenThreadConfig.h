@@ -29,7 +29,7 @@
 // the facilities provided by the CHIP Device Layer
 //#define OPENTHREAD_CONFIG_LOG_OUTPUT OPENTHREAD_CONFIG_LOG_OUTPUT_APP
 
-#include "gen_ot_config.h"
+#include "openthread-project-core-config.h"
 
 // When operating in a less than ideal RF environment, having a more forgiving configuration
 // of OpenThread makes thread a great deal more reliable.
