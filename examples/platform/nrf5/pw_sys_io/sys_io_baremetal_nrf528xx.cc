@@ -66,7 +66,7 @@ Status ReadByte(std::byte * dest)
     while (app_uart_get(reinterpret_cast<uint8_t *>(dest)) != NRF_SUCCESS)
     {
     }
-    return Status::OK;
+    return OkStatus();
 }
 
 // Send a byte over UARTE. Since this blocks on every byte, it's rather
@@ -80,7 +80,7 @@ Status WriteByte(std::byte b)
     while (app_uart_put(*reinterpret_cast<uint8_t *>(&b)) != NRF_SUCCESS)
     {
     }
-    return Status::OK;
+    return OkStatus();
 }
 
 // Writes a string using pw::sys_io, and add newline characters at the end.
