@@ -43,7 +43,7 @@ buildconfig_header("crypto_buildconfig") {
 }
 
 if (chip_crypto == "openssl") {
-  import("${build_root}/config/linux/pkg_config.gni")
+  import("${build_root}/config/${current_os}/pkg_config.gni")
 
   pkg_config("openssl_config") {
     packages = [ "openssl" ]

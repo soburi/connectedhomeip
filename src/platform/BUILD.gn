@@ -17,7 +17,7 @@ import("//build_overrides/chip.gni")
 import("//build_overrides/nlio.gni")
 import("//build_overrides/pigweed.gni")
 
-import("${build_root}/config/linux/pkg_config.gni")
+import("${build_root}/config/${current_os}/pkg_config.gni")
 import("${chip_root}/build/chip/buildconfig_header.gni")
 
 import("device.gni")
