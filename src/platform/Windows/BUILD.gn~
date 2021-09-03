@@ -19,7 +19,7 @@ import("${build_root}/config/${current_os}/pkg_config.gni")
 
 import("${chip_root}/src/platform/device.gni")
 
-assert(chip_device_platform == "linux")
+assert(chip_device_platform == "win")
 
 if (chip_enable_openthread) {
   import("//build_overrides/openthread.gni")
@@ -100,14 +100,14 @@ static_library("Linux") {
       "ThreadStackManagerImpl.h",
     ]
 
-    public_deps += [ "dbus/openthread" ]
+    #public_deps += [ "dbus/openthread" ]
   }
 
   if (chip_enable_wifi) {
-    public_deps += [ "dbus/wpa" ]
+    #public_deps += [ "dbus/wpa" ]
   }
 
   if (chip_enable_ble) {
-    public_deps += [ "dbus/bluez" ]
+    #public_deps += [ "dbus/bluez" ]
   }
 }

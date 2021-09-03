@@ -32,7 +32,7 @@ if (chip_mdns != "none") {
   }
 }
 
-static_library("Linux") {
+static_library("Windows") {
   sources = [
     "../DeviceSafeQueue.cpp",
     "../DeviceSafeQueue.h",
@@ -100,14 +100,14 @@ static_library("Linux") {
       "ThreadStackManagerImpl.h",
     ]
 
-    public_deps += [ "dbus/openthread" ]
+    #public_deps += [ "dbus/openthread" ]
   }
 
   if (chip_enable_wifi) {
-    public_deps += [ "dbus/wpa" ]
+    #public_deps += [ "dbus/wpa" ]
   }
 
   if (chip_enable_ble) {
-    public_deps += [ "dbus/bluez" ]
+    #public_deps += [ "dbus/bluez" ]
   }
 }
