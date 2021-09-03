@@ -53,6 +53,7 @@ import subprocess
 import sys
 
 args = sys.argv[1:]
+args.insert(0, sys.executable)
 
 ret = subprocess.call(args)
 if ret != 0:
