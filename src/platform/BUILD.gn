@@ -284,6 +284,8 @@ if (chip_device_platform != "none") {
       _platform_target = "K32W"
     } else if (chip_device_platform == "linux") {
       _platform_target = "Linux"
+    } else if (chip_device_platform == "win") {
+      _platform_target = "Windows"
     } else if (chip_device_platform == "nrfconnect") {
       _platform_target = "nrfconnect"
     } else if (chip_device_platform == "qpg") {

@@ -31,6 +31,8 @@ if (chip_device_platform == "auto") {
     chip_device_platform = "darwin"
   } else if (current_os == "linux") {
     chip_device_platform = "linux"
+  } else if (current_os == "win") {
+    chip_device_platform = "win"
   } else {
     chip_device_platform = "none"
   }
@@ -134,6 +136,7 @@ assert(
         chip_device_platform == "darwin" || chip_device_platform == "efr32" ||
         chip_device_platform == "esp32" || chip_device_platform == "external" ||
         chip_device_platform == "linux" ||
+        chip_device_platform == "win" ||
         chip_device_platform == "nrfconnect" ||
         chip_device_platform == "k32w" || chip_device_platform == "qpg" ||
         chip_device_platform == "telink" || chip_device_platform == "mbed" ||
