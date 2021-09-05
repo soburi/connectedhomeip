@@ -76,15 +76,15 @@ void LogV(uint8_t module, uint8_t category, const char * msg, va_list v)
     if (IsCategoryEnabled(category))
     {
         {
-            char formattedMsg[CHIP_DEVICE_CONFIG_LOG_MESSAGE_MAX_SIZE];
+            char formattedMsg[CHIP_CONFIG_LOG_MESSAGE_MAX_SIZE];
             size_t prefixLen;
 
-            constexpr size_t maxPrefixLen = ChipLoggingModuleNameLen + 3;
-            static_assert(sizeof(formattedMsg) > maxPrefixLen);
+            //constexpr size_t maxPrefixLen = ChipLoggingModuleNameLen + 3;
+            //static_assert(sizeof(formattedMsg) > maxPrefixLen);
 
             // Form the log prefix, e.g. "[DL] "
             formattedMsg[0] = '[';
-            GetModuleName(formattedMsg + 1, module);
+            //GetModuleName(formattedMsg + 1, module);
             prefixLen                 = strlen(formattedMsg);
             formattedMsg[prefixLen++] = ']';
             formattedMsg[prefixLen++] = ' ';
@@ -99,7 +99,7 @@ void LogV(uint8_t module, uint8_t category, const char * msg, va_list v)
                 NRF_LOG_ERROR("%s", NRF_LOG_PUSH(formattedMsg));
                 break;
             case kLogCategory_Progress:
-            case kLogCategory_Retain:
+            //case kLogCategory_Retain:
             default:
                 NRF_LOG_INFO("%s", NRF_LOG_PUSH(formattedMsg));
                 break;
@@ -149,7 +149,7 @@ extern "C" void LwIPLog(const char * msg, ...)
 
 #if NRF_LOG_ENABLED
     {
-        char formattedMsg[CHIP_DEVICE_CONFIG_LOG_MESSAGE_MAX_SIZE];
+        char formattedMsg[CHIP_CONFIG_LOG_MESSAGE_MAX_SIZE];
 
         // Append the log message.
         size_t len = vsnprintf(formattedMsg, sizeof(formattedMsg), msg, v);
@@ -189,7 +189,7 @@ extern "C" void otPlatLog(otLogLevel aLogLevel, otLogRegion aLogRegion, const ch
 
 #if NRF_LOG_ENABLED
     {
-        char formattedMsg[CHIP_DEVICE_CONFIG_LOG_MESSAGE_MAX_SIZE];
+        char formattedMsg[CHIP_CONFIG_LOG_MESSAGE_MAX_SIZE];
 
         // Append the log message.
         vsnprintf(formattedMsg, sizeof(formattedMsg), aFormat, v);
