@@ -55,24 +55,6 @@ extern "C" {
 using namespace ::chip;
 using namespace ::chip::DeviceLayer;
 
-#if CHIP_ENABLE_OPENTHREAD
-static void * ot_calloc(size_t n, size_t size)
-{
-    void * p_ptr = NULL;
-
-    p_ptr = pvPortMalloc(n * size);
-
-    memset(p_ptr, 0, n * size);
-
-    return p_ptr;
-}
-
-static void ot_free(void * p_ptr)
-{
-    vPortFree(p_ptr);
-}
-#endif
-
 ret_code_t ChipInit()
 {
     ret_code_t ret = CHIP_NO_ERROR;
