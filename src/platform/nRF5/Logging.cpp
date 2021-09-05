@@ -131,6 +131,13 @@ void LogV(uint8_t module, uint8_t category, const char * msg, va_list v)
 #define NRF_LOG_MODULE_NAME lwip
 NRF_LOG_MODULE_REGISTER();
 
+static int
+isspace(int c)
+{
+	return (c == '\t' || c == '\n' ||
+	    c == '\v' || c == '\f' || c == '\r' || c == ' ' ? 1 : 0);
+}
+
 /**
  * LwIP log output function.
  */

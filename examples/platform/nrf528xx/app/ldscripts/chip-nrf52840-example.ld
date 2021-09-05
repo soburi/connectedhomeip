@@ -23,7 +23,7 @@ MEMORY
     SD_FLASH (rx) : ORIGIN = 0, LENGTH = 0x27000
 
     /* RAM region used by the Nordic SoftDevice */
-    SD_RAM (rw) : ORIGIN = 0x20000000, LENGTH = 0x5800
+    SD_RAM (rw) : ORIGIN = 0x20000000, LENGTH = 0x5968
 
     /* FLASH region used for Nordic FDS value storage. */
     FDS_FLASH (rw) : ORIGIN = TOTAL_FLASH_SIZE - (FLASH_PAGE_SIZE * FDS_FLASH_PAGES), LENGTH = (FLASH_PAGE_SIZE * FDS_FLASH_PAGES)
