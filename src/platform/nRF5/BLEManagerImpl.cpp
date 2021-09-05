@@ -396,7 +396,7 @@ uint16_t BLEManagerImpl::GetMTU(BLE_CONNECTION_OBJECT conId) const
 }
 
 bool BLEManagerImpl::SendIndication(BLE_CONNECTION_OBJECT conId, const ChipBleUUID * svcId, const ChipBleUUID * charId,
-                                    PacketBuffer * data)
+                                    PacketBufferHandle data)
 {
     CHIP_ERROR err = CHIP_NO_ERROR;
     ble_gatts_hvx_params_t hvxParams;
@@ -418,7 +418,7 @@ bool BLEManagerImpl::SendIndication(BLE_CONNECTION_OBJECT conId, const ChipBleUU
     SuccessOrExit(err);
 
 exit:
-    PacketBuffer::Free(data);
+    //PacketBuffer::Free(data);
     if (err != CHIP_NO_ERROR)
     {
         ChipLogError(DeviceLayer, "BLEManagerImpl::SendIndication() failed: %s", ErrorStr(err));
@@ -428,14 +428,14 @@ exit:
 }
 
 bool BLEManagerImpl::SendWriteRequest(BLE_CONNECTION_OBJECT conId, const ChipBleUUID * svcId, const ChipBleUUID * charId,
-                                      PacketBuffer * pBuf)
+                                      PacketBufferHandle bufh)
 {
     ChipLogProgress(DeviceLayer, "BLEManagerImpl::SendWriteRequest() not supported");
     return false;
 }
 
 bool BLEManagerImpl::SendReadRequest(BLE_CONNECTION_OBJECT conId, const ChipBleUUID * svcId, const ChipBleUUID * charId,
-                                     PacketBuffer * pBuf)
+                                     PacketBufferHandle bufh)
 {
     ChipLogProgress(DeviceLayer, "BLEManagerImpl::SendReadRequest() not supported");
     return false;
@@ -522,7 +522,7 @@ CHIP_ERROR BLEManagerImpl::StartAdvertising(void)
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     if (!mFlags.Has(Flags::kAdvertising))
     {
-        ThreadStackMgr().OnCHIPoBLEAdvertisingStart();
+        //ThreadStackMgr().OnCHIPoBLEAdvertisingStart();
     }
 #endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
 
@@ -650,7 +650,7 @@ CHIP_ERROR BLEManagerImpl::StopAdvertising(void)
 
         // Directly inform the ThreadStackManager that CHIPoBLE advertising has stopped.
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
-        ThreadStackMgr().OnCHIPoBLEAdvertisingStop();
+        //ThreadStackMgr().OnCHIPoBLEAdvertisingStop();
 #endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
 
         // Post a CHIPoBLEAdvertisingChange(Stopped) event.
@@ -810,18 +810,19 @@ void BLEManagerImpl::SoftDeviceBLEEventCallback(const ble_evt_t * bleEvent, void
     if (bleEvent->header.evt_id == BLE_GATTS_EVT_WRITE &&
         bleEvent->evt.gatts_evt.params.write.handle == sInstance.mCHIPoBLECharHandle_RX.value_handle)
     {
-        PacketBuffer * buf;
+        PacketBufferHandle buf;
         const uint16_t valLen = bleEvent->evt.gatts_evt.params.write.len;
         // TODO: This cast does not obviously looks safe.
         // https://github.com/project-chip/connectedhomeip/issues/2571
-        const uint16_t minBufSize = static_cast<uint16_t>(CHIP_SYSTEM_PACKETBUFFER_HEADER_SIZE + valLen);
+        //const uint16_t minBufSize = static_cast<uint16_t>(CHIP_SYSTEM_PACKETBUFFER_HEADER_SIZE + valLen);
 
         // Attempt to allocate a packet buffer with enough space to hold the characteristic value.
         // Note that we must use pbuf_alloc() directly, as PacketBuffer::New() is not interrupt-safe.
-        buf = (PacketBuffer *) (pbuf_alloc(PBUF_RAW, minBufSize, PBUF_POOL));
+        buf = System::PacketBufferHandle::New(valLen);
+			//(PacketBuffer *) (pbuf_alloc(PBUF_RAW, minBufSize, PBUF_POOL));
 
         // If successful...
-        if (buf != NULL)
+        if (!buf.IsNull())
         {
             // Copy the characteristic value into the packet buffer.
             memcpy(buf->Start(), bleEvent->evt.gatts_evt.params.write.data, valLen);
@@ -831,7 +832,7 @@ void BLEManagerImpl::SoftDeviceBLEEventCallback(const ble_evt_t * bleEvent, void
             event.Type                                = DeviceEventType::kCHIPoBLERXCharWriteEvent;
             event.Platform.RXCharWriteEvent.ConId     = bleEvent->evt.gatts_evt.conn_handle;
             event.Platform.RXCharWriteEvent.WriteArgs = bleEvent->evt.gatts_evt.params.write;
-            event.Platform.RXCharWriteEvent.Data      = buf;
+            event.Platform.RXCharWriteEvent.Data      = std::move(buf).UnsafeRelease();
         }
 
         // If we failed to allocate a buffer, post a kCHIPoBLEOutOfBuffersEvent event.
@@ -953,11 +954,12 @@ CHIP_ERROR BLEManagerImpl::HandleRXCharWrite(const ChipDeviceEvent * event)
                   event->Platform.RXCharWriteEvent.ConId, buf->DataLength());
 
     // Pass the data to the BLEEndPoint
-    HandleWriteReceived(event->Platform.RXCharWriteEvent.ConId, &CHIP_BLE_SVC_ID, &chipUUID_CHIPoBLEChar_RX, buf);
+    HandleWriteReceived(event->Platform.RXCharWriteEvent.ConId, &CHIP_BLE_SVC_ID, &chipUUID_CHIPoBLEChar_RX,
+		        PacketBufferHandle::Adopt(buf));
     buf = NULL;
 
 exit:
-    PacketBuffer::Free(buf);
+    //PacketBuffer::Free(buf);
     return err;
 }
 
