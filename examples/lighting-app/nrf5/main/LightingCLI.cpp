@@ -24,6 +24,7 @@
 #include "task.h"
 
 #include <lib/shell/streamer.h>
+#include <lib/shell/Engine.h>
 
 #include <lib/core/CHIPCore.h>
 #include <lib/support/Base64.h>
@@ -86,7 +87,7 @@ void CLIAppEventHandler(AppEvent * event)
     }
 }
 
-int cmd_light(int argc, char ** argv)
+CHIP_ERROR cmd_light(int argc, char ** argv)
 {
     // TODO: Add or remove multiple endpoints support.
     bool read_state = false;
@@ -132,9 +133,9 @@ exit:
     return 0;
 }
 
-int cmd_app(int argc, char ** argv)
+CHIP_ERROR cmd_app(int argc, char ** argv)
 {
-    int end_point = 1;
+    //int end_point = 1;
     AppEvent event;
     event.Type    = AppEvent::kEventType_CLI;
     event.Handler = CLIAppEventHandler;
@@ -161,9 +162,14 @@ shell_command_t cmd_lightingcli[] = {
     { &cmd_app, "app", "App utilities" },
 };
 
+void shell_task(void * args)
+{
+    Engine::Root().RunMainLoop();
+}
+
 void cmd_app_init(void)
 {
-    shell_register(cmd_lightingcli, ArraySize(cmd_lightingcli));
+    Engine::Root().RegisterCommands(cmd_lightingcli, ArraySize(cmd_lightingcli));
 }
 
 } // namespace
@@ -185,14 +191,14 @@ void LightingCLIMain(void * pvParameter)
         return;
     }
 
-    ChipLogDetail(Shell, "Initializing CHIP shell", rc);
+    ChipLogDetail(Shell, "Initializing CHIP shell: %d", rc);
 
     cmd_misc_init();
     cmd_app_init();
-    cmd_btp_init();
+    //cmd_btp_init();
     cmd_otcli_init();
 
-    ChipLogDetail(Shell, "Run CHIP shell Task", rc);
+    ChipLogDetail(Shell, "Run CHIP shell Task: %d", rc);
 
     shell_task(NULL);
 }
