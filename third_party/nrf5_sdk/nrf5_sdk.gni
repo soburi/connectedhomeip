@@ -143,6 +143,8 @@ template("nrf5_sdk") {
     cflags = [
       "-Wno-array-bounds",
       "-Wno-unused-function",
+      "-Wno-expansion-to-defined",
+      "-Wno-implicit-fallthrough"
     ]
 
     # Now add our "system-header" include dirs
