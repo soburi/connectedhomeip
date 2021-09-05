@@ -426,6 +426,12 @@ template("nrf5_sdk") {
       "${nrf5_sdk_root}/modules/nrfx/soc/nrfx_irqs_nrf52840.h",
     ]
 
+    sources += [
+      "${nrf5_sdk_root}/external/mbedtls/library/x509_create.c",
+      "${nrf5_sdk_root}/external/mbedtls/library/x509_csr.c",
+      "${nrf5_sdk_root}/external/mbedtls/library/x509write_csr.c",
+    ]
+
     public_deps = [
       "${openthread_root}/include/openthread:openthread_config",
       "${segger_rtt_root}:segger_rtt",
