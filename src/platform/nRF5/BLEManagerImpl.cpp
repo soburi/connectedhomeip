@@ -64,6 +64,7 @@ extern "C" {
 #endif // NRF_LOG_ENABLED
 
 using namespace chip::Ble;
+using namespace chip::System;
 
 namespace chip {
 namespace DeviceLayer {
@@ -134,7 +135,8 @@ CHIP_ERROR BLEManagerImpl::_Init()
     ble_add_char_params_t addCharParams;
 
     mServiceMode = ConnectivityManager::kCHIPoBLEServiceMode_Enabled;
-    mFlags       = CHIP_DEVICE_CONFIG_CHIPOBLE_ENABLE_ADVERTISING_AUTOSTART ? kFlag_AdvertisingEnabled : 0;
+    mFlags.ClearAll();
+    mFlags.Set(Flags::kAdvertisingEnabled, CHIP_DEVICE_CONFIG_CHIPOBLE_ENABLE_ADVERTISING_AUTOSTART ? true : false);
     mAdvHandle   = BLE_GAP_ADV_SET_HANDLE_NOT_SET;
     mNumGAPCons  = 0;
     for (int i = 0; i < kMaxConnections; i++)
@@ -244,9 +246,9 @@ CHIP_ERROR BLEManagerImpl::_SetAdvertisingEnabled(bool val)
 
     VerifyOrExit(mServiceMode != ConnectivityManager::kCHIPoBLEServiceMode_NotSupported, err = CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE);
 
-    if (GetFlag(mFlags, kFlag_AdvertisingEnabled) != val)
+    if (mFlags.Has(Flags::kAdvertisingEnabled) != val)
     {
-        SetFlag(mFlags, kFlag_AdvertisingEnabled, val);
+        mFlags.Set(Flags::kAdvertisingEnabled, val);
         PlatformMgr().ScheduleWork(DriveBLEState, 0);
     }
 
@@ -260,9 +262,9 @@ CHIP_ERROR BLEManagerImpl::_SetFastAdvertisingEnabled(bool val)
 
     VerifyOrExit(mServiceMode == ConnectivityManager::kCHIPoBLEServiceMode_NotSupported, err = CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE);
 
-    if (GetFlag(mFlags, kFlag_FastAdvertisingEnabled) != val)
+    if (mFlags.Has(Flags::kFastAdvertisingEnabled) != val)
     {
-        SetFlag(mFlags, kFlag_FastAdvertisingEnabled, val);
+        mFlags.Set(Flags::kFastAdvertisingEnabled, val);
         PlatformMgr().ScheduleWork(DriveBLEState, 0);
     }
 
@@ -343,13 +345,13 @@ void BLEManagerImpl::_OnPlatformEvent(const ChipDeviceEvent * event)
 #if CHIP_DEVICE_CONFIG_CHIPOBLE_DISABLE_ADVERTISING_WHEN_PROVISIONED
         if (ConfigurationMgr().IsFullyProvisioned())
         {
-            ClearFlag(mFlags, kFlag_AdvertisingEnabled);
+            mFlags.Clear(Flags::kAdvertisingEnabled);
             ChipLogProgress(DeviceLayer, "CHIPoBLE advertising disabled because device is fully provisioned");
         }
 #endif // CHIP_DEVICE_CONFIG_CHIPOBLE_DISABLE_ADVERTISING_WHEN_PROVISIONED
 
         // Force the advertising state to be refreshed to reflect new provisioning state.
-        SetFlag(mFlags, kFlag_AdvertisingRefreshNeeded);
+        mFlags.Set(Flags::kAdvertisingRefreshNeeded, true);
 
         DriveBLEState();
 
@@ -456,16 +458,16 @@ void BLEManagerImpl::DriveBLEState(void)
     CHIP_ERROR err = CHIP_NO_ERROR;
 
     // Perform any initialization actions that must occur after the CHIP task is running.
-    if (!GetFlag(mFlags, kFlag_AsyncInitCompleted))
+    if (!mFlags.Has(Flags::kAsyncInitCompleted))
     {
-        SetFlag(mFlags, kFlag_AsyncInitCompleted);
+        mFlags.Set(Flags::kAsyncInitCompleted, true);
 
         // If CHIP_DEVICE_CONFIG_CHIPOBLE_DISABLE_ADVERTISING_WHEN_PROVISIONED is enabled,
         // disable CHIPoBLE advertising if the device is fully provisioned.
 #if CHIP_DEVICE_CONFIG_CHIPOBLE_DISABLE_ADVERTISING_WHEN_PROVISIONED
         if (ConfigurationMgr().IsFullyProvisioned())
         {
-            ClearFlag(mFlags, kFlag_AdvertisingEnabled);
+            mFlags.Clear(Flags::kAdvertisingEnabled);
             ChipLogProgress(DeviceLayer, "CHIPoBLE advertising disabled because device is fully provisioned");
         }
 #endif // CHIP_DEVICE_CONFIG_CHIPOBLE_DISABLE_ADVERTISING_WHEN_PROVISIONED
@@ -473,7 +475,7 @@ void BLEManagerImpl::DriveBLEState(void)
 
     // If the application has enabled CHIPoBLE and BLE advertising...
     if (mServiceMode == ConnectivityManager::kCHIPoBLEServiceMode_Enabled &&
-        GetFlag(mFlags, kFlag_AdvertisingEnabled)
+        mFlags.Has(Flags::kAdvertisingEnabled)
 #if CHIP_DEVICE_CONFIG_CHIPOBLE_SINGLE_CONNECTION
         // and no connections are active...
         && (mNumGAPCons == 0)
@@ -482,7 +484,7 @@ void BLEManagerImpl::DriveBLEState(void)
     {
         // Start/re-start SoftDevice advertising if not already advertising, or if the
         // advertising state of the SoftDevice needs to be refreshed.
-        if (!GetFlag(mFlags, kFlag_Advertising) || GetFlag(mFlags, kFlag_AdvertisingRefreshNeeded))
+        if (!mFlags.Has(Flags::kAdvertising) || mFlags.Has(Flags::kAdvertisingRefreshNeeded))
         {
             err = StartAdvertising();
             SuccessOrExit(err);
@@ -518,14 +520,14 @@ CHIP_ERROR BLEManagerImpl::StartAdvertising(void)
 
     // If necessary, inform the ThreadStackManager that CHIPoBLE advertising is about to start.
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
-    if (!GetFlag(mFlags, kFlag_Advertising))
+    if (!mFlags.Has(Flags::kAdvertising))
     {
         ThreadStackMgr().OnCHIPoBLEAdvertisingStart();
     }
 #endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
 
     // Since we're about to update the SoftDevice, clear the refresh needed flag.
-    ClearFlag(mFlags, kFlag_AdvertisingRefreshNeeded);
+    mFlags.Clear(Flags::kAdvertisingRefreshNeeded);
 
     if (mAdvHandle != BLE_GAP_ADV_SET_HANDLE_NOT_SET)
     {
@@ -569,9 +571,9 @@ CHIP_ERROR BLEManagerImpl::StartAdvertising(void)
     // if the application has expressly requested fast advertising.
     // TODO: Return back the !ConfigurationMgr().IsFullyProvisioned() checking when the ConfigurationMgr() will be available
     gapAdvParams.interval =
-        ((numCHIPoBLECons == 0 /* && !ConfigurationMgr().IsFullyProvisioned()*/) || GetFlag(mFlags, kFlag_FastAdvertisingEnabled))
-        ? CHIP_DEVICE_CONFIG_BLE_FAST_ADVERTISING_INTERVAL
-        : CHIP_DEVICE_CONFIG_BLE_SLOW_ADVERTISING_INTERVAL;
+        ((numCHIPoBLECons == 0 /* && !ConfigurationMgr().IsFullyProvisioned()*/) || mFlags.Has(Flags::kFastAdvertisingEnabled))
+        ? CHIP_DEVICE_CONFIG_BLE_FAST_ADVERTISING_INTERVAL_MAX
+        : CHIP_DEVICE_CONFIG_BLE_SLOW_ADVERTISING_INTERVAL_MAX;
 
 #if CHIP_PROGRESS_LOGGING
 
@@ -602,11 +604,11 @@ CHIP_ERROR BLEManagerImpl::StartAdvertising(void)
     SuccessOrExit(err);
 
     // Transition to the Advertising state...
-    if (!GetFlag(mFlags, kFlag_Advertising))
+    if (!mFlags.Has(Flags::kAdvertising))
     {
         ChipLogProgress(DeviceLayer, "CHIPoBLE advertising started");
 
-        SetFlag(mFlags, kFlag_Advertising);
+        mFlags.Set(Flags::kAdvertising, true);
 
         // Post a CHIPoBLEAdvertisingChange(Started) event.
         {
@@ -626,7 +628,7 @@ CHIP_ERROR BLEManagerImpl::StopAdvertising(void)
     CHIP_ERROR err = CHIP_NO_ERROR;
 
     // Since we're about to update the SoftDevice, clear the refresh needed flag.
-    ClearFlag(mFlags, kFlag_AdvertisingRefreshNeeded);
+    mFlags.Clear(Flags::kAdvertisingRefreshNeeded);
 
     // Instruct the SoftDevice to stop advertising.
     // Ignore any error indicating that advertising is already stopped.  This case is arises
@@ -640,9 +642,9 @@ CHIP_ERROR BLEManagerImpl::StopAdvertising(void)
     SuccessOrExit(err);
 
     // Transition to the not Advertising state...
-    if (GetFlag(mFlags, kFlag_Advertising))
+    if (mFlags.Has(Flags::kAdvertising))
     {
-        ClearFlag(mFlags, kFlag_Advertising);
+        mFlags.Clear(Flags::kAdvertising);
 
         ChipLogProgress(DeviceLayer, "CHIPoBLE advertising stopped");
 
@@ -885,7 +887,7 @@ CHIP_ERROR BLEManagerImpl::HandleGAPConnect(const ChipDeviceEvent * event)
     // The SoftDevice automatically disables advertising whenever a connection is established.
     // So record that the SoftDevice state needs to be refreshed. If advertising needs to be
     // re-enabled, this will be handled in DriveBLEState() the next time it runs.
-    SetFlag(mFlags, kFlag_AdvertisingRefreshNeeded);
+    mFlags.Set(Flags::kAdvertisingRefreshNeeded, true);
 
     // Schedule DriveBLEState() to run.
     PlatformMgr().ScheduleWork(DriveBLEState, 0);
@@ -928,7 +930,7 @@ CHIP_ERROR BLEManagerImpl::HandleGAPDisconnect(const ChipDeviceEvent * event)
 
     // Force a reconfiguration of advertising in case we switched to non-connectable mode when
     // the BLE connection was established.
-    SetFlag(mFlags, kFlag_AdvertisingRefreshNeeded);
+    mFlags.Set(Flags::kAdvertisingRefreshNeeded, true);
     PlatformMgr().ScheduleWork(DriveBLEState, 0);
 
     return CHIP_NO_ERROR;

@@ -99,13 +99,13 @@ private:
 
     // ===== Private members reserved for use by this class only.
 
-    enum
+    enum class Flags : uint8_t
     {
-        kFlag_AsyncInitCompleted     = 0x0001, /**< One-time asynchronous initialization actions have been performed. */
-        kFlag_AdvertisingEnabled     = 0x0002, /**< The application has enabled CHIPoBLE advertising. */
-        kFlag_FastAdvertisingEnabled = 0x0004, /**< The application has enabled fast advertising. */
-        kFlag_Advertising            = 0x0008, /**< The system is currently CHIPoBLE advertising. */
-        kFlag_AdvertisingRefreshNeeded =
+        kAsyncInitCompleted     = 0x0001, /**< One-time asynchronous initialization actions have been performed. */
+        kAdvertisingEnabled     = 0x0002, /**< The application has enabled CHIPoBLE advertising. */
+        kFastAdvertisingEnabled = 0x0004, /**< The application has enabled fast advertising. */
+        kAdvertising            = 0x0008, /**< The system is currently CHIPoBLE advertising. */
+        kAdvertisingRefreshNeeded =
             0x0010, /**< The advertising state/configuration has changed, but the SoftDevice has yet to be updated. */
     };
 
@@ -119,7 +119,7 @@ private:
     ble_gatts_char_handles_t mCHIPoBLECharHandle_RX;
     ble_gatts_char_handles_t mCHIPoBLECharHandle_TX;
     CHIPoBLEServiceMode mServiceMode;
-    uint16_t mFlags;
+    BitFlags<BLEManagerImpl::Flags> mFlags;
     uint16_t mNumGAPCons;
     uint16_t mSubscribedConIds[kMaxConnections];
     uint8_t mAdvHandle;
