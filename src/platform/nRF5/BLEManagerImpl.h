@@ -108,6 +108,7 @@ private:
         kAdvertisingRefreshNeeded =
             0x0010, /**< The advertising state/configuration has changed, but the SoftDevice has yet to be updated. */
     };
+    BitFlags<BLEManagerImpl::Flags> mFlags;
 
     enum
     {
@@ -119,7 +120,6 @@ private:
     ble_gatts_char_handles_t mCHIPoBLECharHandle_RX;
     ble_gatts_char_handles_t mCHIPoBLECharHandle_TX;
     CHIPoBLEServiceMode mServiceMode;
-    BitFlags<BLEManagerImpl::Flags> mFlags;
     uint16_t mNumGAPCons;
     uint16_t mSubscribedConIds[kMaxConnections];
     uint8_t mAdvHandle;

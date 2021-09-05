@@ -351,7 +351,7 @@ void BLEManagerImpl::_OnPlatformEvent(const ChipDeviceEvent * event)
 #endif // CHIP_DEVICE_CONFIG_CHIPOBLE_DISABLE_ADVERTISING_WHEN_PROVISIONED
 
         // Force the advertising state to be refreshed to reflect new provisioning state.
-        mFlags.Set(Flags::kAdvertisingRefreshNeeded, true);
+        mFlags.Set(Flags::kAdvertisingRefreshNeeded);
 
         DriveBLEState();
 
@@ -428,14 +428,14 @@ exit:
 }
 
 bool BLEManagerImpl::SendWriteRequest(BLE_CONNECTION_OBJECT conId, const ChipBleUUID * svcId, const ChipBleUUID * charId,
-                                      PacketBufferHandle bufh)
+                                      PacketBufferHandle pBuf)
 {
     ChipLogProgress(DeviceLayer, "BLEManagerImpl::SendWriteRequest() not supported");
     return false;
 }
 
 bool BLEManagerImpl::SendReadRequest(BLE_CONNECTION_OBJECT conId, const ChipBleUUID * svcId, const ChipBleUUID * charId,
-                                     PacketBufferHandle bufh)
+                                     PacketBufferHandle pBuf)
 {
     ChipLogProgress(DeviceLayer, "BLEManagerImpl::SendReadRequest() not supported");
     return false;
@@ -460,7 +460,7 @@ void BLEManagerImpl::DriveBLEState(void)
     // Perform any initialization actions that must occur after the CHIP task is running.
     if (!mFlags.Has(Flags::kAsyncInitCompleted))
     {
-        mFlags.Set(Flags::kAsyncInitCompleted, true);
+        mFlags.Set(Flags::kAsyncInitCompleted);
 
         // If CHIP_DEVICE_CONFIG_CHIPOBLE_DISABLE_ADVERTISING_WHEN_PROVISIONED is enabled,
         // disable CHIPoBLE advertising if the device is fully provisioned.
@@ -522,7 +522,7 @@ CHIP_ERROR BLEManagerImpl::StartAdvertising(void)
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     if (!mFlags.Has(Flags::kAdvertising))
     {
-        //ThreadStackMgr().OnCHIPoBLEAdvertisingStart();
+        ThreadStackMgrImpl()._OnCHIPoBLEAdvertisingStart();
     }
 #endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
 
@@ -608,7 +608,7 @@ CHIP_ERROR BLEManagerImpl::StartAdvertising(void)
     {
         ChipLogProgress(DeviceLayer, "CHIPoBLE advertising started");
 
-        mFlags.Set(Flags::kAdvertising, true);
+        mFlags.Set(Flags::kAdvertising);
 
         // Post a CHIPoBLEAdvertisingChange(Started) event.
         {
@@ -650,7 +650,7 @@ CHIP_ERROR BLEManagerImpl::StopAdvertising(void)
 
         // Directly inform the ThreadStackManager that CHIPoBLE advertising has stopped.
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
-        //ThreadStackMgr().OnCHIPoBLEAdvertisingStop();
+        ThreadStackMgrImpl()._OnCHIPoBLEAdvertisingStop();
 #endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
 
         // Post a CHIPoBLEAdvertisingChange(Stopped) event.
@@ -888,7 +888,7 @@ CHIP_ERROR BLEManagerImpl::HandleGAPConnect(const ChipDeviceEvent * event)
     // The SoftDevice automatically disables advertising whenever a connection is established.
     // So record that the SoftDevice state needs to be refreshed. If advertising needs to be
     // re-enabled, this will be handled in DriveBLEState() the next time it runs.
-    mFlags.Set(Flags::kAdvertisingRefreshNeeded, true);
+    mFlags.Set(Flags::kAdvertisingRefreshNeeded);
 
     // Schedule DriveBLEState() to run.
     PlatformMgr().ScheduleWork(DriveBLEState, 0);
@@ -931,7 +931,7 @@ CHIP_ERROR BLEManagerImpl::HandleGAPDisconnect(const ChipDeviceEvent * event)
 
     // Force a reconfiguration of advertising in case we switched to non-connectable mode when
     // the BLE connection was established.
-    mFlags.Set(Flags::kAdvertisingRefreshNeeded, true);
+    mFlags.Set(Flags::kAdvertisingRefreshNeeded);
     PlatformMgr().ScheduleWork(DriveBLEState, 0);
 
     return CHIP_NO_ERROR;
