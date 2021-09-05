@@ -30,6 +30,7 @@
 // ==================== General Platform Adaptations ====================
 
 #define CHIP_CONFIG_ERROR_TYPE ret_code_t
+#define CHIP_CONFIG_ERROR_FORMAT PRId32
 #define CHIP_CONFIG_NO_ERROR NRF_SUCCESS
 #define CHIP_CONFIG_ERROR_MIN 4000000
 #define CHIP_CONFIG_ERROR_MAX 4000999
