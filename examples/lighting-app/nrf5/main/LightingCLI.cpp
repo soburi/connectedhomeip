@@ -23,7 +23,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-#include <lib/shell/shell.h>
+#include <lib/shell/streamer.h>
 
 #include <lib/core/CHIPCore.h>
 #include <lib/support/Base64.h>
