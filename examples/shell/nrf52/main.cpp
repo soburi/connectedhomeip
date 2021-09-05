@@ -17,7 +17,8 @@
 
 #include <platform/CHIPDeviceConfig.h>
 
-#include <lib/shell/shell.h>
+#include <lib/shell/streamer.h>
+#include <lib/shell/Engine.h>
 
 #include <lib/core/CHIPCore.h>
 #include <lib/support/Base64.h>
@@ -83,6 +84,11 @@ exit:
     return err;
 }
 
+static void shell_task(void * args)
+{
+    Engine::Root().RunMainLoop();
+}
+
 int main()
 {
     soft_device_init();
@@ -97,9 +103,9 @@ int main()
     }
 
     cmd_misc_init();
-    cmd_base64_init();
-    cmd_device_init();
-    cmd_btp_init();
+    //cmd_base64_init();
+    //cmd_device_init();
+    //cmd_btp_init();
     cmd_otcli_init();
 
     shell_task(nullptr);

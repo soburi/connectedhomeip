@@ -83,7 +83,7 @@ nrf5_executable("shell_nrf5") {
     "${nrf5_platform_dir}/util/streamer/streamer_nrf5.cpp",
     "${project_dir}/nrf52/include/CHIPProjectConfig.h",
     "${project_dir}/nrf52/main.cpp",
-    "${project_dir}/test_identity.cpp",
+#    "${project_dir}/test_identity.cpp",
   ]
 
   deps = [
