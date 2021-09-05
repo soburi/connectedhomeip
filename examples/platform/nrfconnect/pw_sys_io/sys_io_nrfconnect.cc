@@ -19,7 +19,6 @@
 
 #include "console/console.h"
 #include "pw_sys_io/sys_io.h"
-#include <cassert>
 #include <zephyr.h>
 
 #ifdef CONFIG_USB
