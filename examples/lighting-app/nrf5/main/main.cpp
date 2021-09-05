@@ -52,7 +52,7 @@ extern "C" {
 #endif // NRF_LOG_ENABLED
 
 #include "chipinit.h"
-#include "nrf528xx/app/support/FreeRTOSNewlibLockSupport_test.h"
+#include "nrf5/app/support/FreeRTOSNewlibLockSupport_test.h"
 #include <AppTask.h>
 #include <platform/CHIPDeviceLayer.h>
 

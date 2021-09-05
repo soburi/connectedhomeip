@@ -23,7 +23,7 @@ import("${nrf5_sdk_build_root}/nrf5_executable.gni")
 import("${nrf5_sdk_build_root}/nrf5_sdk.gni")
 assert(current_os == "freertos")
 
-nrf5_platform_dir = "${chip_root}/examples/platform/nrf528xx"
+nrf5_platform_dir = "${chip_root}/examples/platform/nrf5"
 
 config("default_config") {
   include_dirs = [ "include" ]
