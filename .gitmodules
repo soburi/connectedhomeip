@@ -167,3 +167,6 @@
 	path = third_party/pybind11/repo
 	url = https://github.com/pybind/pybind11
 	branch  = stable
+[submodule "third_party/openthread/ot-nrf528xx"]
+	path = third_party/openthread/ot-nrf528xx
+	url = https://github.com/soburi/ot-nrf528xx
