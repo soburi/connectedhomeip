@@ -79,7 +79,7 @@ def GetOptions():
     # Compute header guard by replacing some chars with _ and upper-casing.
     header_guard = cmdline_options.output.upper()
     header_guard = \
-        header_guard.replace('/', '_').replace('\\', '_').replace('.', '_')
+        header_guard.replace('/', '_').replace('\\', '_').replace('.', '_').replace('-', '_')
     header_guard += '_'
 
     # The actual output file is inside the gen dir.
