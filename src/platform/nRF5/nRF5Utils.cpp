@@ -55,7 +55,7 @@ void RegisterNRFErrorFormatter(void)
  * @return false                    If the supplied error was not an nRF SDK error.
  *
  */
-bool FormatNRFError(char * buf, uint16_t bufSize, int32_t err)
+bool FormatNRFError(char * buf, uint16_t bufSize, uint32_t err)
 {
     const char * subsys = NULL;
 
