@@ -87,7 +87,6 @@ nrf5_executable("lighting_app") {
 
   deps = [
     ":sdk",
-    "${chip_root}/examples/common/chip-app-server:chip-app-server",
     "${chip_root}/examples/lighting-app/lighting-common",
     "${chip_root}/examples/shell/shell_common:shell_common",
     "${chip_root}/src/lib",
