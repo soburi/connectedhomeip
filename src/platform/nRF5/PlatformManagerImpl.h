@@ -2,6 +2,7 @@
  *
  *    Copyright (c) 2020 Project CHIP Authors
  *    Copyright (c) 2018 Nest Labs, Inc.
+ *    All rights reserved.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -18,7 +19,8 @@
 
 /**
  *    @file
- *          Provides an implementation of the PlatformManager object.
+ *          Provides an implementation of the PlatformManager object
+ *          for nRF52 platforms using the Nordic nRF5 SDK.
  */
 
 #pragma once
@@ -79,7 +81,7 @@ inline PlatformManager & PlatformMgr(void)
  * Returns the platform-specific implementation of the PlatformManager singleton object.
  *
  * chip applications can use this to gain access to features of the PlatformManager
- * that are specific to the ESP32 platform.
+ * that are specific to the nRF52 platform.
  */
 inline PlatformManagerImpl & PlatformMgrImpl(void)
 {
