@@ -223,6 +223,22 @@ exit:
     return err;
 }
 
+bool BLEManagerImpl::_IsAdvertisingEnabled(void)
+{
+    return mFlags.Has(Flags::kAdvertisingEnabled);
+}
+
+bool BLEManagerImpl::_IsFastAdvertisingEnabled(void)
+{
+    return mFlags.Has(Flags::kFastAdvertisingEnabled);
+}
+
+bool BLEManagerImpl::_IsAdvertising(void)
+{
+    return mFlags.Has(Flags::kAdvertising);
+}
+
+
 CHIP_ERROR BLEManagerImpl::_SetCHIPoBLEServiceMode(CHIPoBLEServiceMode val)
 {
     CHIP_ERROR err = CHIP_NO_ERROR;
