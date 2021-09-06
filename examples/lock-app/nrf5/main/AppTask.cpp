@@ -64,8 +64,6 @@ static LEDWidget sLockLED;
 static LEDWidget sUnusedLED;
 static LEDWidget sUnusedLED_1;
 
-static LEDWidget sLockStatusLED;
-
 static bool sIsThreadProvisioned     = false;
 static bool sIsThreadEnabled         = false;
 static bool sIsThreadAttached        = false;
@@ -103,17 +101,9 @@ int AppTask::Init()
 {
     ret_code_t ret;
 
-    // Init ZCL Data Model and start server
-    InitServer();
-
-    // Initialize LEDs
     sStatusLED.Init(SYSTEM_STATE_LED);
-
     sLockLED.Init(LOCK_STATE_LED);
     sLockLED.Set(!BoltLockMgr().IsUnlocked());
-
-    sLockStatusLED.Init(LOCK_STATE_LED_GPIO);
-    sLockStatusLED.Set(!BoltLockMgr().IsUnlocked());
 
     sUnusedLED.Init(BSP_LED_2);
     sUnusedLED_1.Init(BSP_LED_3);
@@ -156,15 +146,6 @@ int AppTask::Init()
         APP_ERROR_HANDLER(ret);
     }
 
-    ret = BoltLockMgr().Init();
-    if (ret != NRF_SUCCESS)
-    {
-        NRF_LOG_INFO("BoltLockMgr().Init() failed");
-        APP_ERROR_HANDLER(ret);
-    }
-
-    BoltLockMgr().SetCallbacks(ActionInitiated, ActionCompleted);
-
     sCHIPEventLock = xSemaphoreCreateMutex();
     if (sCHIPEventLock == NULL)
     {
@@ -172,29 +153,23 @@ int AppTask::Init()
         APP_ERROR_HANDLER(NRF_ERROR_NULL);
     }
 
+    ret = BoltLockMgr().Init();
+    if (ret != NRF_SUCCESS)
     {
-        CHIP_ERROR err = CHIP_NO_ERROR;
-        uint32_t setUpPINCode       = 0;
-	std::string qrcode;
-
-        err = ConfigurationMgr().GetSetupPinCode(setUpPINCode);
-        if (err != CHIP_NO_ERROR)
-        {
-            NRF_LOG_INFO("ConfigurationMgr().GetSetupPinCode() failed: %s", chip::ErrorStr(err));
-        }
-
-	err = GetQRCode(qrcode, chip::RendezvousInformationFlag::kBLE);
-        if (err != CHIP_NO_ERROR)
-        {
-            NRF_LOG_INFO("Failed to generate QR Code");
-        }
-
-        NRF_LOG_INFO("SetupPINCode: [%" PRIu32 "]", setUpPINCode);
-        // There might be whitespace in setup QRCode, add brackets to make it clearer.
-        NRF_LOG_INFO("SetupQRCode:  [%s]", qrcode.c_str());
+        NRF_LOG_INFO("BoltLockMgr().Init() failed");
+        APP_ERROR_HANDLER(ret);
     }
+    BoltLockMgr().SetCallbacks(ActionInitiated, ActionCompleted);
 
-    return ret;
+    // Init ZCL Data Model and start server
+    InitServer();
+    ConfigurationMgr().LogDeviceConfig();
+    PrintOnboardingCodes(chip::RendezvousInformationFlag(chip::RendezvousInformationFlag::kBLE));
+
+#ifdef CONFIG_CHIP_NFC_COMMISSIONING
+    PlatformMgr().AddEventHandler(ThreadProvisioningHandler, 0);
+#endif
+    return 0;
 }
 
 void AppTask::AppTaskMain(void * pvParameter)
@@ -215,6 +190,7 @@ void AppTask::AppTaskMain(void * pvParameter)
     while (true)
     {
         BaseType_t eventReceived = xQueueReceive(sAppEventQueue, &event, pdMS_TO_TICKS(10));
+
         while (eventReceived == pdTRUE)
         {
             sAppTask.DispatchEvent(&event);
@@ -226,6 +202,7 @@ void AppTask::AppTaskMain(void * pvParameter)
         // while these values are queried.  However we use a non-blocking lock request
         // (TryLockChipStack()) to avoid blocking other UI activities when the CHIP
         // task is busy (e.g. with a long crypto operation).
+
         if (PlatformMgr().TryLockChipStack())
         {
             sIsThreadProvisioned     = ConnectivityMgr().IsThreadProvisioned();
@@ -235,10 +212,6 @@ void AppTask::AppTaskMain(void * pvParameter)
             sHaveServiceConnectivity = ConnectivityMgr().HaveServiceConnectivity();
             PlatformMgr().UnlockChipStack();
         }
-
-        // Consider the system to be "fully connected" if it has service
-        // connectivity and it is able to interact with the service on a regular basis.
-        bool isFullyConnected = sHaveServiceConnectivity;
 
         // Update the status LED if factory reset has not been initiated.
         //
@@ -254,11 +227,11 @@ void AppTask::AppTaskMain(void * pvParameter)
         // Otherwise, blink the LED ON for a very short time.
         if (sAppTask.mFunction != kFunction_FactoryReset)
         {
-            if (isFullyConnected)
+            if (sHaveServiceConnectivity)
             {
                 sStatusLED.Set(true);
             }
-            else if (sIsThreadProvisioned && sIsThreadEnabled && sIsPairedToAccount && (!sIsThreadAttached || !isFullyConnected))
+            else if (sIsThreadProvisioned && sIsThreadEnabled && sIsPairedToAccount && (!sIsThreadAttached || !sHaveServiceConnectivity))
             {
                 sStatusLED.Blink(950, 50);
             }
@@ -277,9 +250,6 @@ void AppTask::AppTaskMain(void * pvParameter)
         sUnusedLED.Animate();
         sUnusedLED_1.Animate();
 
-        sLockStatusLED.Set(!BoltLockMgr().IsUnlocked());
-        sLockStatusLED.Animate();
-
         uint64_t nowUS            = chip::System::Platform::Layer::GetClock_Monotonic();
         uint64_t nextChangeTimeUS = mLastChangeTimeUS + 5 * 1000 * 1000UL;
 
@@ -293,10 +263,8 @@ void AppTask::AppTaskMain(void * pvParameter)
 
 void AppTask::LockActionEventHandler(AppEvent * aEvent)
 {
-    bool initiated = false;
-    BoltLockManager::Action_t action;
-    int32_t actor  = 0;
-    ret_code_t ret = NRF_SUCCESS;
+    BoltLockManager::Action_t action = BoltLockManager::INVALID_ACTION;
+    int32_t actor                    = 0;
 
     if (aEvent->Type == AppEvent::kEventType_Lock)
     {
@@ -305,29 +273,12 @@ void AppTask::LockActionEventHandler(AppEvent * aEvent)
     }
     else if (aEvent->Type == AppEvent::kEventType_Button)
     {
-        if (BoltLockMgr().IsUnlocked())
-        {
-            action = BoltLockManager::LOCK_ACTION;
-        }
-        else
-        {
-            action = BoltLockManager::UNLOCK_ACTION;
-        }
-    }
-    else
-    {
-        ret = NRF_ERROR_NULL;
+        action = BoltLockMgr().IsUnlocked() ? BoltLockManager::LOCK_ACTION : BoltLockManager::UNLOCK_ACTION;
+        actor  = AppEvent::kEventType_Button;
     }
 
-    if (ret == NRF_SUCCESS)
-    {
-        initiated = BoltLockMgr().InitiateAction(actor, action);
-
-        if (!initiated)
-        {
-            NRF_LOG_INFO("Action is already in progress or active.");
-        }
-    }
+    if (action != BoltLockManager::INVALID_ACTION && !BoltLockMgr().InitiateAction(actor, action))
+        NRF_LOG_INFO("Action is already in progress or active.");
 }
 
 #if CHIP_ENABLE_OPENTHREAD
@@ -400,7 +351,6 @@ void AppTask::FunctionTimerEventHandler(AppEvent * aEvent)
 
         // Start timer for FACTORY_RESET_CANCEL_WINDOW_TIMEOUT to allow user to cancel, if required.
         sAppTask.StartTimer(FACTORY_RESET_CANCEL_WINDOW_TIMEOUT);
-
         sAppTask.mFunction = kFunction_FactoryReset;
 
         // Turn off all LEDs before starting blink to make sure blink is co-ordinated.
@@ -421,6 +371,16 @@ void AppTask::FunctionTimerEventHandler(AppEvent * aEvent)
         ConfigurationMgr().InitiateFactoryReset();
     }
 }
+
+#if 0
+int AppTask::SoftwareUpdateConfirmationHandler(uint32_t offset, uint32_t size, void * arg)
+{
+    // For now just print update progress and confirm data chunk without any additional checks.
+    LOG_INF("Software update progress %d B / %d B", offset, size);
+
+    return 0;
+}
+#endif
 
 void AppTask::FunctionHandler(AppEvent * aEvent)
 {
@@ -520,15 +480,19 @@ void AppTask::ActionCompleted(BoltLockManager::Action_t aAction)
     if (aAction == BoltLockManager::LOCK_ACTION)
     {
         NRF_LOG_INFO("Lock Action has been completed");
-
         sLockLED.Set(true);
     }
     else if (aAction == BoltLockManager::UNLOCK_ACTION)
     {
         NRF_LOG_INFO("Unlock Action has been completed");
-
         sLockLED.Set(false);
     }
+#if 0
+    if (aActor == AppEvent::kEventType_Button)
+    {
+        sAppTask.UpdateClusterState();
+    }
+#endif
 }
 
 void AppTask::PostLockActionRequest(int32_t aActor, BoltLockManager::Action_t aAction)
@@ -563,3 +527,17 @@ void AppTask::DispatchEvent(AppEvent * aEvent)
         NRF_LOG_INFO("Event received with no handler. Dropping event.");
     }
 }
+#if 0
+void AppTask::UpdateClusterState()
+{
+    uint8_t newValue = !BoltLockMgr().IsUnlocked();
+
+    // write the new on/off value
+    EmberAfStatus status = emberAfWriteAttribute(1, ZCL_ON_OFF_CLUSTER_ID, ZCL_ON_OFF_ATTRIBUTE_ID, CLUSTER_MASK_SERVER, &newValue,
+                                                 ZCL_BOOLEAN_ATTRIBUTE_TYPE);
+    if (status != EMBER_ZCL_STATUS_SUCCESS)
+    {
+        LOG_ERR("Updating on/off %x", status);
+    }
+}
+#endif
