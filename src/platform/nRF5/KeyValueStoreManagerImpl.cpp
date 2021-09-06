@@ -41,16 +41,18 @@ CHIP_ERROR KeyValueStoreManagerImpl::_Get(const char * key, void * value, size_t
                                           size_t offset_bytes)
 {
     CHIP_ERROR err = CHIP_NO_ERROR;
-    //std::hash<std::string> hash_fn;
-    uint16_t key_id = chip::DeviceLayer::Internal::NRF5Config::kFileId_KVS;
+    std::hash<std::string> hash_fn;
+    uint16_t key_id;
+    uint16_t fileid_kvs = chip::DeviceLayer::Internal::NRF5Config::kFileId_KVS;
     size_t read_bytes;
 
     VerifyOrExit((key != NULL) && (value != NULL), err = CHIP_ERROR_INVALID_ARGUMENT);
+    key_id = static_cast<uint16_t>(hash_fn(key) % MAX_NO_OF_KEYS);
 
     ChipLogProgress(DeviceLayer, "KVS, get key id:: %i", key_id);
 
     err = chip::DeviceLayer::Internal::NRF5Config::ReadConfigValueBin(
-        chip::DeviceLayer::Internal::NRF5ConfigKey(0, 0), (uint8_t *) value, value_size, read_bytes);
+        chip::DeviceLayer::Internal::NRF5ConfigKey(fileid_kvs, key_id), (uint8_t *) value, value_size, read_bytes);
 
     *read_bytes_size = read_bytes;
 
@@ -61,15 +63,17 @@ exit:
 CHIP_ERROR KeyValueStoreManagerImpl::_Put(const char * key, const void * value, size_t value_size)
 {
     CHIP_ERROR err = CHIP_NO_ERROR;
-    uint16_t key_id = chip::DeviceLayer::Internal::NRF5Config::kFileId_KVS;
+    std::hash<std::string> hash_fn;
+    uint16_t key_id;
+    uint16_t fileid_kvs = chip::DeviceLayer::Internal::NRF5Config::kFileId_KVS;
 
     VerifyOrExit((key != NULL) && (value != NULL), err = CHIP_ERROR_INVALID_ARGUMENT);
-    //key_id = hash_fn(key) % MAX_NO_OF_KEYS;
+    key_id = static_cast<uint16_t>(hash_fn(key) % MAX_NO_OF_KEYS);
 
     ChipLogProgress(DeviceLayer, "KVS, put key id:: %i", key_id);
 
     err = chip::DeviceLayer::Internal::NRF5Config::WriteConfigValueBin(
-        chip::DeviceLayer::Internal::NRF5ConfigKey(0, 0), (uint8_t *) value, value_size);
+        chip::DeviceLayer::Internal::NRF5ConfigKey(fileid_kvs, key_id), (uint8_t *) value, value_size);
 
 exit:
     return err;
@@ -78,14 +82,16 @@ exit:
 CHIP_ERROR KeyValueStoreManagerImpl::_Delete(const char * key)
 {
     CHIP_ERROR err = CHIP_NO_ERROR;
-    uint16_t key_id = chip::DeviceLayer::Internal::NRF5Config::kFileId_KVS;
+    std::hash<std::string> hash_fn;
+    uint16_t key_id;
+    uint16_t fileid_kvs = chip::DeviceLayer::Internal::NRF5Config::kFileId_KVS;
 
     VerifyOrExit(key != NULL, err = CHIP_ERROR_INVALID_ARGUMENT);
-//    key_id = hash_fn(key) % MAX_NO_OF_KEYS;
+    key_id = static_cast<uint16_t>(hash_fn(key) % MAX_NO_OF_KEYS);
 
     ChipLogProgress(DeviceLayer, "KVS, deleting key id:: %i", key_id);
 
-    err = chip::DeviceLayer::Internal::NRF5Config::ClearConfigValue(chip::DeviceLayer::Internal::NRF5ConfigKey(0, 0));
+    err = chip::DeviceLayer::Internal::NRF5Config::ClearConfigValue(chip::DeviceLayer::Internal::NRF5ConfigKey(fileid_kvs, key_id));
 
 exit:
     return err;

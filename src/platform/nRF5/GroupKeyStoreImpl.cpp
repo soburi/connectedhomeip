@@ -311,6 +311,18 @@ exit:
     return err;
 }
 
+CHIP_ERROR GroupKeyStoreImpl::DecodeGroupKeyId(const uint8_t * encodedKey, size_t encodedKeyLen, uint32_t & keyId)
+{
+    CHIP_ERROR err = CHIP_NO_ERROR;
+
+    VerifyOrExit(encodedKeyLen >= kFixedEncodedKeySize, err = CHIP_ERROR_INVALID_ARGUMENT);
+
+    keyId = Encoding::LittleEndian::Get32(encodedKey);
+
+exit:
+    return err;
+}
+
 CHIP_ERROR GroupKeyStoreImpl::DecodeGroupKey(const uint8_t * encodedKey, size_t encodedKeyLen, ChipGroupKey & key)
 {
     CHIP_ERROR err    = CHIP_NO_ERROR;
@@ -325,18 +337,6 @@ CHIP_ERROR GroupKeyStoreImpl::DecodeGroupKey(const uint8_t * encodedKey, size_t 
     VerifyOrExit(encodedKeyLen >= kFixedEncodedKeySize + key.KeyLen, err = CHIP_ERROR_INVALID_ARGUMENT);
 
     memcpy(key.Key, p, key.KeyLen);
-
-exit:
-    return err;
-}
-
-CHIP_ERROR GroupKeyStoreImpl::DecodeGroupKeyId(const uint8_t * encodedKey, size_t encodedKeyLen, uint32_t & keyId)
-{
-    CHIP_ERROR err = CHIP_NO_ERROR;
-
-    VerifyOrExit(encodedKeyLen >= kFixedEncodedKeySize, err = CHIP_ERROR_INVALID_ARGUMENT);
-
-    keyId = Encoding::LittleEndian::Get32(encodedKey);
 
 exit:
     return err;
