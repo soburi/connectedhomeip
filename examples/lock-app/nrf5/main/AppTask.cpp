@@ -21,6 +21,14 @@
 #include "AppEvent.h"
 #include "LEDWidget.h"
 #include "Service.h"
+#include "ThreadUtil.h"
+#include <app/server/OnboardingCodesUtil.h>
+#include <app/server/Server.h>
+
+#include <app/common/gen/attribute-id.h>
+#include <app/common/gen/attribute-type.h>
+#include <app/common/gen/cluster-id.h>
+#include <app/util/attribute-storage.h>
 
 #include "app_button.h"
 #include "app_config.h"
@@ -41,10 +49,8 @@
 #include <support/ErrorStr.h>
 #include <system/SystemClock.h>
 
-#include <app/server/OnboardingCodesUtil.h>
 
 #include <lib/support/logging/CHIPLogging.h>
-#include <app/server/Server.h>
 
 #define FACTORY_RESET_TRIGGER_TIMEOUT 3000
 #define FACTORY_RESET_CANCEL_WINDOW_TIMEOUT 3000
@@ -52,12 +58,11 @@
 #define APP_TASK_PRIORITY 2
 #define APP_EVENT_QUEUE_SIZE 10
 
-APP_TIMER_DEF(sFunctionTimer);
-
 static SemaphoreHandle_t sCHIPEventLock;
-
 static TaskHandle_t sAppTaskHandle;
 static QueueHandle_t sAppEventQueue;
+
+constexpr uint32_t kPublishServicePeriodUs = 5000000;
 
 static LEDWidget sStatusLED;
 static LEDWidget sLockLED;
@@ -66,10 +71,10 @@ static LEDWidget sUnusedLED_1;
 
 static bool sIsThreadProvisioned     = false;
 static bool sIsThreadEnabled         = false;
-static bool sIsThreadAttached        = false;
-static bool sIsPairedToAccount       = false;
 static bool sHaveBLEConnections      = false;
 static bool sHaveServiceConnectivity = false;
+
+APP_TIMER_DEF(sFunctionTimer);
 
 using namespace ::chip::DeviceLayer;
 
@@ -112,9 +117,8 @@ int AppTask::Init()
     static app_button_cfg_t sButtons[] = {
         { LOCK_BUTTON, APP_BUTTON_ACTIVE_LOW, BUTTON_PULL, ButtonEventHandler },
         { FUNCTION_BUTTON, APP_BUTTON_ACTIVE_LOW, BUTTON_PULL, ButtonEventHandler },
-#if CHIP_ENABLE_OPENTHREAD
-        { JOIN_BUTTON, APP_BUTTON_ACTIVE_LOW, BUTTON_PULL, ButtonEventHandler },
-#endif
+        { THREAD_START_BUTTON, APP_BUTTON_ACTIVE_LOW, BUTTON_PULL, ButtonEventHandler },
+        { BLE_ADVERTISEMENT_START_BUTTON, APP_BUTTON_ACTIVE_LOW, BUTTON_PULL, ButtonEventHandler },
     };
 
     ret = app_button_init(sButtons, ARRAY_SIZE(sButtons), pdMS_TO_TICKS(FUNCTION_BUTTON_DEBOUNCE_PERIOD_MS));
@@ -176,7 +180,7 @@ void AppTask::AppTaskMain(void * pvParameter)
 {
     ret_code_t ret;
     AppEvent event;
-    uint64_t mLastChangeTimeUS = 0;
+    uint64_t mLastPublishServiceTimeUS = 0;
 
     ret = sAppTask.Init();
     if (ret != NRF_SUCCESS)
@@ -207,7 +211,6 @@ void AppTask::AppTaskMain(void * pvParameter)
         {
             sIsThreadProvisioned     = ConnectivityMgr().IsThreadProvisioned();
             sIsThreadEnabled         = ConnectivityMgr().IsThreadEnabled();
-            sIsThreadAttached        = ConnectivityMgr().IsThreadAttached();
             sHaveBLEConnections      = (ConnectivityMgr().NumBLEConnections() != 0);
             sHaveServiceConnectivity = ConnectivityMgr().HaveServiceConnectivity();
             PlatformMgr().UnlockChipStack();
@@ -231,7 +234,7 @@ void AppTask::AppTaskMain(void * pvParameter)
             {
                 sStatusLED.Set(true);
             }
-            else if (sIsThreadProvisioned && sIsThreadEnabled && sIsPairedToAccount && (!sIsThreadAttached || !sHaveServiceConnectivity))
+            else if (sIsThreadProvisioned && sIsThreadEnabled)
             {
                 sStatusLED.Blink(950, 50);
             }
@@ -251,12 +254,12 @@ void AppTask::AppTaskMain(void * pvParameter)
         sUnusedLED_1.Animate();
 
         uint64_t nowUS            = chip::System::Platform::Layer::GetClock_Monotonic();
-        uint64_t nextChangeTimeUS = mLastChangeTimeUS + 5 * 1000 * 1000UL;
+        uint64_t nextChangeTimeUS = mLastPublishServiceTimeUS + kPublishServicePeriodUs;
 
         if (nowUS > nextChangeTimeUS)
         {
             PublishService();
-            mLastChangeTimeUS = nowUS;
+            mLastPublishServiceTimeUS = nowUS;
         }
     }
 }
@@ -281,53 +284,42 @@ void AppTask::LockActionEventHandler(AppEvent * aEvent)
         NRF_LOG_INFO("Action is already in progress or active.");
 }
 
-#if CHIP_ENABLE_OPENTHREAD
-void AppTask::JoinHandler(AppEvent * aEvent)
-{
-    if (aEvent->ButtonEvent.PinNo != JOIN_BUTTON)
-        return;
-
-    CHIP_ERROR error = ThreadStackMgr().JoinerStart();
-    NRF_LOG_INFO("Thread joiner triggered: %s", chip::ErrorStr(error));
-}
-#endif
-
 void AppTask::ButtonEventHandler(uint8_t pin_no, uint8_t button_action)
 {
-    if (pin_no != LOCK_BUTTON
-#if CHIP_ENABLE_OPENTHREAD
-        && pin_no != JOIN_BUTTON
-#endif
-        && pin_no != FUNCTION_BUTTON)
-    {
-        return;
-    }
-
-    AppEvent button_event           = {};
-    button_event.Type               = AppEvent::kEventType_Button;
-    button_event.ButtonEvent.PinNo  = pin_no;
-    button_event.ButtonEvent.Action = button_action;
+    AppEvent button_event;
+    button_event.Type = AppEvent::kEventType_Button;
 
     if (pin_no == LOCK_BUTTON && button_action == APP_BUTTON_PUSH)
     {
-        button_event.Handler = LockActionEventHandler;
-    }
-    else if (pin_no == FUNCTION_BUTTON)
-    {
-        button_event.Handler = FunctionHandler;
-    }
-#if CHIP_ENABLE_OPENTHREAD
-    else if (pin_no == JOIN_BUTTON && button_action == APP_BUTTON_RELEASE)
-    {
-        button_event.Handler = JoinHandler;
-    }
-#endif
-    else
-    {
-        return;
+        button_event.ButtonEvent.PinNo  = LOCK_BUTTON;
+        button_event.ButtonEvent.Action = APP_BUTTON_PUSH;
+        button_event.Handler            = LockActionEventHandler;
+        sAppTask.PostEvent(&button_event);
     }
 
-    sAppTask.PostEvent(&button_event);
+    if (pin_no == FUNCTION_BUTTON)
+    {
+        button_event.ButtonEvent.PinNo  = FUNCTION_BUTTON;
+        button_event.ButtonEvent.Action = button_action;
+        button_event.Handler            = FunctionHandler;
+        sAppTask.PostEvent(&button_event);
+    }
+
+    if (pin_no == THREAD_START_BUTTON && button_action == APP_BUTTON_PUSH)
+    {
+        button_event.ButtonEvent.PinNo  = THREAD_START_BUTTON;
+        button_event.ButtonEvent.Action = APP_BUTTON_PUSH;
+        button_event.Handler            = StartThreadHandler;
+        sAppTask.PostEvent(&button_event);
+    }
+
+    if (pin_no == BLE_ADVERTISEMENT_START_BUTTON && button_action == APP_BUTTON_PUSH)
+    {
+        button_event.ButtonEvent.PinNo  = BLE_ADVERTISEMENT_START_BUTTON;
+        button_event.ButtonEvent.Action = APP_BUTTON_PUSH;
+        button_event.Handler            = StartBLEAdvertisementHandler;
+        sAppTask.PostEvent(&button_event);
+    }
 }
 
 void AppTask::TimerEventHandler(void * p_context)
@@ -372,15 +364,13 @@ void AppTask::FunctionTimerEventHandler(AppEvent * aEvent)
     }
 }
 
-#if 0
 int AppTask::SoftwareUpdateConfirmationHandler(uint32_t offset, uint32_t size, void * arg)
 {
     // For now just print update progress and confirm data chunk without any additional checks.
-    LOG_INF("Software update progress %d B / %d B", offset, size);
+    NRF_LOG_INFO("Software update progress %d B / %d B", offset, size);
 
     return 0;
 }
-#endif
 
 void AppTask::FunctionHandler(AppEvent * aEvent)
 {
@@ -427,6 +417,78 @@ void AppTask::FunctionHandler(AppEvent * aEvent)
         }
     }
 }
+
+void AppTask::StartThreadHandler(AppEvent * aEvent)
+{
+    if (aEvent->ButtonEvent.PinNo != THREAD_START_BUTTON)
+        return;
+
+    if (AddTestPairing() != CHIP_NO_ERROR)
+    {
+        NRF_LOG_ERROR("Failed to add test pairing");
+    }
+
+    if (!ConnectivityMgr().IsThreadProvisioned())
+    {
+        StartDefaultThreadNetwork();
+        NRF_LOG_INFO("Device is not commissioned to a Thread network. Starting with the default configuration.");
+    }
+    else
+    {
+        NRF_LOG_INFO("Device is commissioned to a Thread network.");
+    }
+}
+
+void AppTask::StartBLEAdvertisementHandler(AppEvent * aEvent)
+{
+    NRF_LOG_INFO("Start BLE Advertisement");
+
+    if (aEvent->ButtonEvent.PinNo != BLE_ADVERTISEMENT_START_BUTTON)
+        return;
+
+    // In case of having software update enabled, allow on starting BLE advertising after Thread provisioning.
+    if (ConnectivityMgr().IsThreadProvisioned() && !sAppTask.mSoftwareUpdateEnabled)
+    {
+        NRF_LOG_INFO("NFC Tag emulation and BLE advertisement not started - device is commissioned to a Thread network.");
+        return;
+    }
+
+#ifdef CONFIG_CHIP_NFC_COMMISSIONING
+    if (NFCMgr().IsTagEmulationStarted())
+    {
+        NRF_LOG_INFO("NFC Tag emulation is already started");
+    }
+    else
+    {
+        ShareQRCodeOverNFC(chip::RendezvousInformationFlags(chip::RendezvousInformationFlag::kBLE));
+    }
+#endif
+
+    if (ConnectivityMgr().IsBLEAdvertisingEnabled())
+    {
+        NRF_LOG_INFO("BLE Advertisement is already enabled");
+        return;
+    }
+
+    if (OpenDefaultPairingWindow(chip::ResetAdmins::kNo) == CHIP_NO_ERROR)
+    {
+        NRF_LOG_INFO("Enabled BLE Advertisement");
+    }
+    else
+    {
+        NRF_LOG_ERROR("OpenDefaultPairingWindow() failed");
+    }
+}
+
+#ifdef CONFIG_CHIP_NFC_COMMISSIONING
+void AppTask::ThreadProvisioningHandler(const ChipDeviceEvent * event, intptr_t)
+{
+    if (event->Type == DeviceEventType::kCHIPoBLEAdvertisingChange && event->CHIPoBLEAdvertisingChange.Result == kActivity_Stopped)
+    {
+        NFCMgr().StopTagEmulation();
+    }
+}
+#endif
 
 void AppTask::CancelTimer()
 {
@@ -505,14 +567,11 @@ void AppTask::PostLockActionRequest(int32_t aActor, BoltLockManager::Action_t aA
     PostEvent(&event);
 }
 
-void AppTask::PostEvent(const AppEvent * aEvent)
+void AppTask::PostEvent(AppEvent * aEvent)
 {
-    if (sAppEventQueue != NULL)
+    if (sAppEventQueue != NULL && !xQueueSend(sAppEventQueue, aEvent, 1))
     {
-        if (!xQueueSend(sAppEventQueue, aEvent, 1))
-        {
-            NRF_LOG_INFO("Failed to post event to app task event queue");
-        }
+        NRF_LOG_INFO("Failed to post event to app task event queue");
     }
 }
 
@@ -527,7 +586,7 @@ void AppTask::DispatchEvent(AppEvent * aEvent)
         NRF_LOG_INFO("Event received with no handler. Dropping event.");
     }
 }
-#if 0
+
 void AppTask::UpdateClusterState()
 {
     uint8_t newValue = !BoltLockMgr().IsUnlocked();
@@ -537,7 +596,6 @@ void AppTask::UpdateClusterState()
                                                  ZCL_BOOLEAN_ATTRIBUTE_TYPE);
     if (status != EMBER_ZCL_STATUS_SUCCESS)
     {
-        LOG_ERR("Updating on/off %x", status);
+        NRF_LOG_ERROR("Updating on/off %x", status);
     }
 }
-#endif

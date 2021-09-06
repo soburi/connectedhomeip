@@ -35,7 +35,8 @@ public:
     static void AppTaskMain(void * pvParameter);
 
     void PostLockActionRequest(int32_t aActor, BoltLockManager::Action_t aAction);
-    void PostEvent(const AppEvent * event);
+    void PostEvent(AppEvent * event);
+    void UpdateClusterState();
 
 private:
     friend AppTask & GetAppTask(void);
@@ -52,10 +53,16 @@ private:
     static void FunctionTimerEventHandler(AppEvent * aEvent);
     static void FunctionHandler(AppEvent * aEvent);
     static void JoinHandler(AppEvent * aEvent);
+    static void StartThreadHandler(AppEvent * aEvent);
     static void LockActionEventHandler(AppEvent * aEvent);
+    static void StartBLEAdvertisementHandler(AppEvent * aEvent);
+
+    //static void ThreadProvisioningHandler(const chip::DeviceLayer::ChipDeviceEvent * event, intptr_t arg);
 
     static void ButtonEventHandler(uint8_t pin_no, uint8_t button_action);
     static void TimerEventHandler(void * p_context);
+
+    static int SoftwareUpdateConfirmationHandler(uint32_t offset, uint32_t size, void * arg);
 
     void StartTimer(uint32_t aTimeoutInMs);
 
@@ -66,11 +73,11 @@ private:
         kFunction_FactoryReset,
 
         kFunction_Invalid
-    } Function;
+    };
 
-    Function_t mFunction;
-    bool mFunctionTimerActive;
-
+    Function_t mFunction        = kFunction_NoneSelected;
+    bool mFunctionTimerActive   = false;
+    bool mSoftwareUpdateEnabled = false;
     static AppTask sAppTask;
 };
 
