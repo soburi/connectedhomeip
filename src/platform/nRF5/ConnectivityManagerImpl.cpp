@@ -18,14 +18,6 @@
 /* this file behaves like a config.h, comes first */
 #include <platform/internal/CHIPDeviceLayerInternal.h>
 
-#if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
-#include <platform/internal/GenericConnectivityManagerImpl_BLE.cpp>
-#endif
-
-#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
-#include <platform/internal/GenericConnectivityManagerImpl_Thread.cpp>
-#endif
-
 #include <platform/ConnectivityManager.h>
 #include <platform/internal/BLEManager.h>
 #include <support/CodeUtils.h>
@@ -35,6 +27,14 @@
 #include <lwip/ip_addr.h>
 #include <lwip/nd6.h>
 #include <lwip/netif.h>
+
+#if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
+#include <platform/internal/GenericConnectivityManagerImpl_BLE.cpp>
+#endif
+
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+#include <platform/internal/GenericConnectivityManagerImpl_Thread.cpp>
+#endif
 
 using namespace ::chip;
 using namespace ::chip::Inet;
