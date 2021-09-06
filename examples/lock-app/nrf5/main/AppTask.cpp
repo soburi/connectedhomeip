@@ -58,6 +58,9 @@
 #define APP_TASK_PRIORITY 2
 #define APP_EVENT_QUEUE_SIZE 10
 
+#define LOG_ERR NRF_LOG_ERROR
+#define LOG_INF NRF_LOG_INFO
+
 static SemaphoreHandle_t sCHIPEventLock;
 static TaskHandle_t sAppTaskHandle;
 static QueueHandle_t sAppEventQueue;
@@ -87,13 +90,13 @@ int AppTask::StartAppTask()
     sAppEventQueue = xQueueCreate(APP_EVENT_QUEUE_SIZE, sizeof(AppEvent));
     if (sAppEventQueue == NULL)
     {
-        NRF_LOG_INFO("Failed to allocate app event queue");
+        LOG_INF("Failed to allocate app event queue");
         ret = NRF_ERROR_NULL;
         APP_ERROR_HANDLER(ret);
     }
 
     // Start App task.
-    if (xTaskCreate(AppTaskMain, "APP", APP_TASK_STACK_SIZE / sizeof(StackType_t), NULL, APP_TASK_PRIORITY, &sAppTaskHandle) !=
+    if (xTaskCreate(AppTaskMain, "APP", APP_TASK_STACK_SIZE / sizeof(StackType_t), this, APP_TASK_PRIORITY, &sAppTaskHandle) !=
         pdPASS)
     {
         ret = NRF_ERROR_NULL;
@@ -102,9 +105,14 @@ int AppTask::StartAppTask()
     return ret;
 }
 
+void AppTask::AppTaskMain(void * pvParameter)
+{
+    reinterpret_cast<AppTask*>(pvParameter)->StartApp();
+}
+
 int AppTask::Init()
 {
-    ret_code_t ret;
+    // Initialize LEDs
 
     sStatusLED.Init(SYSTEM_STATE_LED);
     sLockLED.Init(LOCK_STATE_LED);
@@ -121,17 +129,17 @@ int AppTask::Init()
         { BLE_ADVERTISEMENT_START_BUTTON, APP_BUTTON_ACTIVE_LOW, BUTTON_PULL, ButtonEventHandler },
     };
 
-    ret = app_button_init(sButtons, ARRAY_SIZE(sButtons), pdMS_TO_TICKS(FUNCTION_BUTTON_DEBOUNCE_PERIOD_MS));
+    ret_code_t ret = app_button_init(sButtons, ARRAY_SIZE(sButtons), pdMS_TO_TICKS(FUNCTION_BUTTON_DEBOUNCE_PERIOD_MS));
     if (ret != NRF_SUCCESS)
     {
-        NRF_LOG_INFO("app_button_init() failed");
+        LOG_INF("app_button_init() failed");
         APP_ERROR_HANDLER(ret);
     }
 
     ret = app_button_enable();
     if (ret != NRF_SUCCESS)
     {
-        NRF_LOG_INFO("app_button_enable() failed");
+        LOG_INF("app_button_enable() failed");
         APP_ERROR_HANDLER(ret);
     }
 
@@ -139,30 +147,25 @@ int AppTask::Init()
     ret = app_timer_init();
     if (ret != NRF_SUCCESS)
     {
-        NRF_LOG_INFO("app_timer_init() failed");
+        LOG_INF("app_timer_init() failed");
         APP_ERROR_HANDLER(ret);
     }
 
     ret = app_timer_create(&sFunctionTimer, APP_TIMER_MODE_SINGLE_SHOT, TimerEventHandler);
     if (ret != NRF_SUCCESS)
     {
-        NRF_LOG_INFO("app_timer_create() failed");
+        LOG_INF("app_timer_create() failed");
         APP_ERROR_HANDLER(ret);
     }
 
     sCHIPEventLock = xSemaphoreCreateMutex();
     if (sCHIPEventLock == NULL)
     {
-        NRF_LOG_INFO("xSemaphoreCreateMutex() failed");
+        LOG_INF("xSemaphoreCreateMutex() failed");
         APP_ERROR_HANDLER(NRF_ERROR_NULL);
     }
 
-    ret = BoltLockMgr().Init();
-    if (ret != NRF_SUCCESS)
-    {
-        NRF_LOG_INFO("BoltLockMgr().Init() failed");
-        APP_ERROR_HANDLER(ret);
-    }
+    BoltLockMgr().Init();
     BoltLockMgr().SetCallbacks(ActionInitiated, ActionCompleted);
 
     // Init ZCL Data Model and start server
@@ -176,16 +179,15 @@ int AppTask::Init()
     return 0;
 }
 
-void AppTask::AppTaskMain(void * pvParameter)
+int AppTask::StartApp()
 {
-    ret_code_t ret;
     AppEvent event;
+    int ret                            = Init();
     uint64_t mLastPublishServiceTimeUS = 0;
 
-    ret = sAppTask.Init();
-    if (ret != NRF_SUCCESS)
+    if (ret)
     {
-        NRF_LOG_INFO("AppTask.Init() failed: %s", chip::ErrorStr(ret));
+        LOG_ERR("AppTask.Init() failed: %s", chip::ErrorStr(ret));
         APP_ERROR_HANDLER(ret);
     }
 
@@ -281,7 +283,7 @@ void AppTask::LockActionEventHandler(AppEvent * aEvent)
     }
 
     if (action != BoltLockManager::INVALID_ACTION && !BoltLockMgr().InitiateAction(actor, action))
-        NRF_LOG_INFO("Action is already in progress or active.");
+        LOG_INF("Action is already in progress or active.");
 }
 
 void AppTask::ButtonEventHandler(uint8_t pin_no, uint8_t button_action)
@@ -339,7 +341,7 @@ void AppTask::FunctionTimerEventHandler(AppEvent * aEvent)
     // If we reached here, the button was held past FACTORY_RESET_TRIGGER_TIMEOUT, initiate factory reset
     if (sAppTask.mFunctionTimerActive && sAppTask.mFunction == kFunction_SoftwareUpdate)
     {
-        NRF_LOG_INFO("Factory Reset Triggered. Release button within %ums to cancel.", FACTORY_RESET_TRIGGER_TIMEOUT);
+        LOG_INF("Factory Reset Triggered. Release button within %ums to cancel.", FACTORY_RESET_TRIGGER_TIMEOUT);
 
         // Start timer for FACTORY_RESET_CANCEL_WINDOW_TIMEOUT to allow user to cancel, if required.
         sAppTask.StartTimer(FACTORY_RESET_CANCEL_WINDOW_TIMEOUT);
@@ -367,7 +369,7 @@ void AppTask::FunctionTimerEventHandler(AppEvent * aEvent)
 int AppTask::SoftwareUpdateConfirmationHandler(uint32_t offset, uint32_t size, void * arg)
 {
     // For now just print update progress and confirm data chunk without any additional checks.
-    NRF_LOG_INFO("Software update progress %d B / %d B", offset, size);
+    LOG_INF("Software update progress %d B / %d B", offset, size);
 
     return 0;
 }
@@ -398,7 +400,7 @@ void AppTask::FunctionHandler(AppEvent * aEvent)
         {
             sAppTask.CancelTimer();
             sAppTask.mFunction = kFunction_NoneSelected;
-            NRF_LOG_INFO("Software update is not implemented");
+            LOG_INF("Software update is not implemented");
         }
         else if (sAppTask.mFunctionTimerActive && sAppTask.mFunction == kFunction_FactoryReset)
         {
@@ -413,7 +415,7 @@ void AppTask::FunctionHandler(AppEvent * aEvent)
             // Change the function to none selected since factory reset has been canceled.
             sAppTask.mFunction = kFunction_NoneSelected;
 
-            NRF_LOG_INFO("Factory Reset has been Canceled");
+            LOG_INF("Factory Reset has been Canceled");
         }
     }
 }
@@ -425,38 +427,36 @@ void AppTask::StartThreadHandler(AppEvent * aEvent)
 
     if (AddTestPairing() != CHIP_NO_ERROR)
     {
-        NRF_LOG_ERROR("Failed to add test pairing");
+        LOG_ERR("Failed to add test pairing");
     }
 
     if (!ConnectivityMgr().IsThreadProvisioned())
     {
         StartDefaultThreadNetwork();
-        NRF_LOG_INFO("Device is not commissioned to a Thread network. Starting with the default configuration.");
+        LOG_INF("Device is not commissioned to a Thread network. Starting with the default configuration.");
     }
     else
     {
-        NRF_LOG_INFO("Device is commissioned to a Thread network.");
+        LOG_INF("Device is commissioned to a Thread network.");
     }
 }
 
 void AppTask::StartBLEAdvertisementHandler(AppEvent * aEvent)
 {
-    NRF_LOG_INFO("Start BLE Advertisement");
-
     if (aEvent->ButtonEvent.PinNo != BLE_ADVERTISEMENT_START_BUTTON)
         return;
 
     // In case of having software update enabled, allow on starting BLE advertising after Thread provisioning.
     if (ConnectivityMgr().IsThreadProvisioned() && !sAppTask.mSoftwareUpdateEnabled)
     {
-        NRF_LOG_INFO("NFC Tag emulation and BLE advertisement not started - device is commissioned to a Thread network.");
+        LOG_INF("NFC Tag emulation and BLE advertisement not started - device is commissioned to a Thread network.");
         return;
     }
 
 #ifdef CONFIG_CHIP_NFC_COMMISSIONING
     if (NFCMgr().IsTagEmulationStarted())
     {
-        NRF_LOG_INFO("NFC Tag emulation is already started");
+        LOG_INF("NFC Tag emulation is already started");
     }
     else
     {
@@ -466,17 +466,17 @@ void AppTask::StartBLEAdvertisementHandler(AppEvent * aEvent)
 
     if (ConnectivityMgr().IsBLEAdvertisingEnabled())
     {
-        NRF_LOG_INFO("BLE Advertisement is already enabled");
+        LOG_INF("BLE Advertisement is already enabled");
         return;
     }
 
     if (OpenDefaultPairingWindow(chip::ResetAdmins::kNo) == CHIP_NO_ERROR)
     {
-        NRF_LOG_INFO("Enabled BLE Advertisement");
+        LOG_INF("Enabled BLE Advertisement");
     }
     else
     {
-        NRF_LOG_ERROR("OpenDefaultPairingWindow() failed");
+        LOG_ERR("OpenDefaultPairingWindow() failed");
     }
 }
 
@@ -497,7 +497,7 @@ void AppTask::CancelTimer()
     ret = app_timer_stop(sFunctionTimer);
     if (ret != NRF_SUCCESS)
     {
-        NRF_LOG_INFO("app_timer_stop() failed");
+        LOG_INF("app_timer_stop() failed");
         APP_ERROR_HANDLER(ret);
     }
 
@@ -511,7 +511,7 @@ void AppTask::StartTimer(uint32_t aTimeoutInMs)
     ret = app_timer_start(sFunctionTimer, pdMS_TO_TICKS(aTimeoutInMs), this);
     if (ret != NRF_SUCCESS)
     {
-        NRF_LOG_INFO("app_timer_start() failed");
+        LOG_INF("app_timer_start() failed");
         APP_ERROR_HANDLER(ret);
     }
 
@@ -524,37 +524,36 @@ void AppTask::ActionInitiated(BoltLockManager::Action_t aAction, int32_t aActor)
     // and start flashing the LEDs rapidly to indicate action initiation.
     if (aAction == BoltLockManager::LOCK_ACTION)
     {
-        NRF_LOG_INFO("Lock Action has been initiated");
+        LOG_INF("Lock Action has been initiated");
     }
     else if (aAction == BoltLockManager::UNLOCK_ACTION)
     {
-        NRF_LOG_INFO("Unlock Action has been initiated");
+        LOG_INF("Unlock Action has been initiated");
     }
 
     sLockLED.Blink(50, 50);
 }
 
-void AppTask::ActionCompleted(BoltLockManager::Action_t aAction)
+void AppTask::ActionCompleted(BoltLockManager::Action_t aAction, int32_t aActor)
 {
     // if the action has been completed by the lock, update the bolt lock trait.
     // Turn on the lock LED if in a LOCKED state OR
     // Turn off the lock LED if in an UNLOCKED state.
     if (aAction == BoltLockManager::LOCK_ACTION)
     {
-        NRF_LOG_INFO("Lock Action has been completed");
+        LOG_INF("Lock Action has been completed");
         sLockLED.Set(true);
     }
     else if (aAction == BoltLockManager::UNLOCK_ACTION)
     {
-        NRF_LOG_INFO("Unlock Action has been completed");
+        LOG_INF("Unlock Action has been completed");
         sLockLED.Set(false);
     }
-#if 0
+
     if (aActor == AppEvent::kEventType_Button)
     {
         sAppTask.UpdateClusterState();
     }
-#endif
 }
 
 void AppTask::PostLockActionRequest(int32_t aActor, BoltLockManager::Action_t aAction)
@@ -571,7 +570,7 @@ void AppTask::PostEvent(AppEvent * aEvent)
 {
     if (sAppEventQueue != NULL && !xQueueSend(sAppEventQueue, aEvent, 1))
     {
-        NRF_LOG_INFO("Failed to post event to app task event queue");
+        LOG_INF("Failed to post event to app task event queue");
     }
 }
 
@@ -583,7 +582,7 @@ void AppTask::DispatchEvent(AppEvent * aEvent)
     }
     else
     {
-        NRF_LOG_INFO("Event received with no handler. Dropping event.");
+        LOG_INF("Event received with no handler. Dropping event.");
     }
 }
 
@@ -596,6 +595,6 @@ void AppTask::UpdateClusterState()
                                                  ZCL_BOOLEAN_ATTRIBUTE_TYPE);
     if (status != EMBER_ZCL_STATUS_SUCCESS)
     {
-        NRF_LOG_ERROR("Updating on/off %x", status);
+        LOG_ERR("Updating on/off %x", status);
     }
 }

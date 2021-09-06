@@ -23,6 +23,7 @@
 
 #include <app/common/gen/attribute-id.h>
 #include <app/common/gen/cluster-id.h>
+#include <app/common/gen/command-id.h>
 #include <app/util/af-types.h>
 #include <app/util/af.h>
 
@@ -63,5 +64,5 @@ void emberAfPostAttributeChangeCallback(EndpointId endpoint, ClusterId clusterId
  */
 void emberAfOnOffClusterInitCallback(EndpointId endpoint)
 {
-    //GetAppTask().UpdateClusterState();
+    GetAppTask().UpdateClusterState();
 }
