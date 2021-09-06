@@ -2,6 +2,7 @@
  *
  *    Copyright (c) 2020 Project CHIP Authors
  *    Copyright (c) 2018 Nest Labs, Inc.
+ *    All rights reserved.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -169,21 +170,6 @@ inline BleLayer * BLEManagerImpl::_GetBleLayer()
 inline BLEManager::CHIPoBLEServiceMode BLEManagerImpl::_GetCHIPoBLEServiceMode(void)
 {
     return mServiceMode;
-}
-
-inline bool BLEManagerImpl::_IsAdvertisingEnabled(void)
-{
-    return mFlags.Has(Flags::kAdvertisingEnabled);
-}
-
-inline bool BLEManagerImpl::_IsFastAdvertisingEnabled(void)
-{
-    return mFlags.Has(Flags::kFastAdvertisingEnabled);
-}
-
-inline bool BLEManagerImpl::_IsAdvertising(void)
-{
-    return mFlags.Has(Flags::kAdvertising);
 }
 
 } // namespace Internal
