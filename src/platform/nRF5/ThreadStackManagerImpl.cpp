@@ -2,6 +2,7 @@
  *
  *    Copyright (c) 2020 Project CHIP Authors
  *    Copyright (c) 2019 Nest Labs, Inc.
+ *    All rights reserved.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -23,17 +24,17 @@
  *          stack.
  *
  */
+
 /* this file behaves like a config.h, comes first */
 #include <platform/internal/CHIPDeviceLayerInternal.h>
-
-#include <platform/FreeRTOS/GenericThreadStackManagerImpl_FreeRTOS.cpp>
-#include <platform/OpenThread/GenericThreadStackManagerImpl_OpenThread_LwIP.cpp>
 
 #include <platform/OpenThread/OpenThreadUtils.h>
 #include <platform/ThreadStackManager.h>
 
-#include "boards.h"
-#include "nrf_log.h"
+#include <platform/FreeRTOS/GenericThreadStackManagerImpl_FreeRTOS.cpp>
+#include <platform/OpenThread/GenericThreadStackManagerImpl_OpenThread_LwIP.cpp>
+
+#include <support/CHIPPlatformMemory.h>
 
 namespace chip {
 namespace DeviceLayer {
@@ -88,4 +89,31 @@ extern "C" void otSysEventSignalPending(void)
 {
     BaseType_t yieldRequired = ThreadStackMgrImpl().SignalThreadActivityPendingFromISR();
     portYIELD_FROM_ISR(yieldRequired);
+}
+
+extern "C" void * pvPortCallocRtos(size_t num, size_t size)
+{
+    size_t totalAllocSize = (size_t)(num * size);
+
+    if (size && totalAllocSize / size != num)
+        return nullptr;
+
+    void * p = pvPortMalloc(totalAllocSize);
+
+    if (p)
+    {
+        memset(p, 0, totalAllocSize);
+    }
+
+    return p;
+}
+
+extern "C" void * otPlatCAlloc(size_t aNum, size_t aSize)
+{
+    return CHIPPlatformMemoryCalloc(aNum, aSize);
+}
+
+extern "C" void otPlatFree(void * aPtr)
+{
+    return CHIPPlatformMemoryFree(aPtr);
 }
