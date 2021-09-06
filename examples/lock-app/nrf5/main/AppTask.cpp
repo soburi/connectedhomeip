@@ -41,8 +41,7 @@
 #include <support/ErrorStr.h>
 #include <system/SystemClock.h>
 
-#include <setup_payload/QRCodeSetupPayloadGenerator.h>
-#include <setup_payload/SetupPayload.h>
+#include <app/server/OnboardingCodesUtil.h>
 
 #include <lib/support/logging/CHIPLogging.h>
 #include <app/server/Server.h>
@@ -175,11 +174,8 @@ int AppTask::Init()
 
     {
         CHIP_ERROR err = CHIP_NO_ERROR;
-        chip::SetupPayload payload;
         uint32_t setUpPINCode       = 0;
-        uint16_t setUpDiscriminator = 0;
-        uint16_t vendorId           = 0;
-        uint16_t productId          = 0;
+	std::string qrcode;
 
         err = ConfigurationMgr().GetSetupPinCode(setUpPINCode);
         if (err != CHIP_NO_ERROR)
@@ -187,35 +183,7 @@ int AppTask::Init()
             NRF_LOG_INFO("ConfigurationMgr().GetSetupPinCode() failed: %s", chip::ErrorStr(err));
         }
 
-        err = ConfigurationMgr().GetSetupDiscriminator(setUpDiscriminator);
-        if (err != CHIP_NO_ERROR)
-        {
-            NRF_LOG_INFO("ConfigurationMgr().GetSetupDiscriminator() failed: %s", chip::ErrorStr(err));
-        }
-
-        err = ConfigurationMgr().GetVendorId(vendorId);
-        if (err != CHIP_NO_ERROR)
-        {
-            NRF_LOG_INFO("ConfigurationMgr().GetVendorId() failed: %s", chip::ErrorStr(err));
-        }
-
-        err = ConfigurationMgr().GetProductId(productId);
-        if (err != CHIP_NO_ERROR)
-        {
-            NRF_LOG_INFO("ConfigurationMgr().GetProductId() failed: %s", chip::ErrorStr(err));
-        }
-
-        payload.version       = 1;
-        payload.vendorID      = vendorId;
-        payload.productID     = productId;
-        payload.setUpPINCode  = setUpPINCode;
-        payload.discriminator = setUpDiscriminator;
-        chip::QRCodeSetupPayloadGenerator generator(payload);
-
-        // TODO: Usage of STL will significantly increase the image size, this should be changed to more efficient method for
-        // generating payload
-        std::string result;
-        err = generator.payloadBase38Representation(result);
+	err = GetQRCode(qrcode, chip::RendezvousInformationFlag::kBLE);
         if (err != CHIP_NO_ERROR)
         {
             NRF_LOG_INFO("Failed to generate QR Code");
@@ -223,7 +191,7 @@ int AppTask::Init()
 
         NRF_LOG_INFO("SetupPINCode: [%" PRIu32 "]", setUpPINCode);
         // There might be whitespace in setup QRCode, add brackets to make it clearer.
-        NRF_LOG_INFO("SetupQRCode:  [%s]", result.c_str());
+        NRF_LOG_INFO("SetupQRCode:  [%s]", qrcode.c_str());
     }
 
     return ret;
