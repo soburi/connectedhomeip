@@ -44,12 +44,6 @@ class BLEManagerImpl final : public BLEManager, private BleLayer, private BlePla
     // the implementation methods provided by this class.
     friend BLEManager;
 
-public:
-    // ===== Platform-specific members available for use by the application.
-
-    uint8_t GetAdvertisingHandle(void);
-    void SetAdvertisingHandle(uint8_t handle);
-
 private:
     // ===== Members that implement the BLEManager internal interface.
 
@@ -165,16 +159,6 @@ inline BLEManager & BLEMgr(void)
 inline BLEManagerImpl & BLEMgrImpl(void)
 {
     return BLEManagerImpl::sInstance;
-}
-
-inline uint8_t BLEManagerImpl::GetAdvertisingHandle(void)
-{
-    return mAdvHandle;
-}
-
-inline void BLEManagerImpl::SetAdvertisingHandle(uint8_t handle)
-{
-    mAdvHandle = handle;
 }
 
 inline BleLayer * BLEManagerImpl::_GetBleLayer()
