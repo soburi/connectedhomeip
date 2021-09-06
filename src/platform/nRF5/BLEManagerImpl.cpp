@@ -518,14 +518,6 @@ CHIP_ERROR BLEManagerImpl::StartAdvertising(void)
     uint16_t numCHIPoBLECons;
     bool connectable;
 
-    // If necessary, inform the ThreadStackManager that CHIPoBLE advertising is about to start.
-#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
-    if (!mFlags.Has(Flags::kAdvertising))
-    {
-        ThreadStackMgrImpl()._OnCHIPoBLEAdvertisingStart();
-    }
-#endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
-
     // Since we're about to update the SoftDevice, clear the refresh needed flag.
     mFlags.Clear(Flags::kAdvertisingRefreshNeeded);
 
@@ -645,13 +637,6 @@ CHIP_ERROR BLEManagerImpl::StopAdvertising(void)
     if (mFlags.Has(Flags::kAdvertising))
     {
         mFlags.Clear(Flags::kAdvertising);
-
-        ChipLogProgress(DeviceLayer, "CHIPoBLE advertising stopped");
-
-        // Directly inform the ThreadStackManager that CHIPoBLE advertising has stopped.
-#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
-        ThreadStackMgrImpl()._OnCHIPoBLEAdvertisingStop();
-#endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
 
         // Post a CHIPoBLEAdvertisingChange(Stopped) event.
         {
