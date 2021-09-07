@@ -73,6 +73,7 @@ nrf5_executable("shell_nrf5") {
   ]
 
   sources = [
+    "${nrf5_platform_dir}/app/chipinit.cpp",
     "${nrf5_platform_dir}/app/include/Service.h",
     "${nrf5_platform_dir}/app/include/chipinit.h",
     "${nrf5_platform_dir}/app/support/CXXExceptionStubs.cpp",
