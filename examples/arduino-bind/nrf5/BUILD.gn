@@ -16,11 +16,10 @@ import("//build_overrides/chip.gni")
 import("//build_overrides/nrf5_sdk.gni")
 import("//build_overrides/openthread.gni")
 
-import("${nrf5_sdk_build_root}/nrf5_executable.gni")
-import("${nrf5_sdk_build_root}/nrf5_sdk.gni")
-
 import("${chip_root}/src/app/chip_data_model.gni")
 
+import("${nrf5_sdk_build_root}/nrf5_executable.gni")
+import("${nrf5_sdk_build_root}/nrf5_sdk.gni")
 
 assert(current_os == "freertos")
 
@@ -71,7 +70,9 @@ nrf5_executable("arduino_bind") {
     "${nrf5_platform_dir}/app/support/CXXExceptionStubs.cpp",
     "${nrf5_platform_dir}/app/support/nRF5Sbrk.c",
     "${nrf5_platform_dir}/util/LEDWidget.cpp",
+    "${nrf5_platform_dir}/util/ThreadUtil.cpp",
     "${nrf5_platform_dir}/util/include/LEDWidget.h",
+    "${nrf5_platform_dir}/util/include/ThreadUtil.h",
     "main/AppTask.cpp",
     "main/BoltLockManager.cpp",
     "main/ZclCallbacks.cpp",
@@ -84,9 +85,7 @@ nrf5_executable("arduino_bind") {
   deps = [
     ":sdk",
     ":zap",
-    "${chip_root}/src/channel",
     "${chip_root}/src/lib",
-    "${chip_root}/src/lib/shell",
     "${chip_root}/src/setup_payload",
     "${chip_root}/third_party/openthread/platforms/nrf528xx:libnordicsemi_nrf52840_radio_driver_softdevice",
     "${chip_root}/third_party/openthread/platforms/nrf528xx:libopenthread-nrf52840-softdevice-sdk",
@@ -100,18 +99,9 @@ nrf5_executable("arduino_bind") {
 
   output_dir = root_out_dir
 
-  ldscript = "ldscripts/chip-nrf52840-example.ld"
-
+  ldscript = "${nrf5_platform_dir}/app/ldscripts/chip-nrf52840-example.ld"
   ldflags = [ "-T" + rebase_path(ldscript, root_build_dir) ]
 }
-
-chip_data_model("zap") {
-  zap_file = "lock-app.zap"
-
-  zap_pregenerated_dir = "gen"
-  is_server = true
-}
-
 
 group("nrf5") {
   deps = [ ":arduino_bind" ]
@@ -119,4 +109,11 @@ group("nrf5") {
 
 group("default") {
   deps = [ ":nrf5" ]
+}
+
+chip_data_model("zap") {
+  zap_file = "lock-app.zap"
+
+  zap_pregenerated_dir = "gen"
+  is_server = true
 }
