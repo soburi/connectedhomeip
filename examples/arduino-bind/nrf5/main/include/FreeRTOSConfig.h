@@ -73,7 +73,8 @@
 #define configUSE_NEWLIB_REENTRANT                               0
 #define configENABLE_BACKWARD_COMPATIBILITY                      1
 
-#define configSUPPORT_STATIC_ALLOCATION                          1
+/*#define configSUPPORT_STATIC_ALLOCATION                          1
+*/
 #define configSUPPORT_DYNAMIC_ALLOCATION                         1
 
 /* Hook function related definitions. */
@@ -102,6 +103,9 @@
 
 /* Tickless idle/low power functionality. */
 
+
+/* Debugging support. */
+#define configINCLUDE_FREERTOS_TASK_C_ADDITIONS_H 1
 
 /* Define to trap errors during development. */
 #if defined(DEBUG_NRF) || defined(DEBUG_NRF_USER)
@@ -183,8 +187,16 @@ standard names - or at least those used in the unmodified vector table. */
  * Settings that are generated automatically
  * basing on the settings above
  */
-#define configSYSTICK_CLOCK_HZ  ( 32768UL )
-#define xPortSysTickHandler     RTC1_IRQHandler
+#if (configTICK_SOURCE == FREERTOS_USE_SYSTICK)
+// do not define configSYSTICK_CLOCK_HZ for SysTick to be configured automatically
+// to CPU clock source
+#define xPortSysTickHandler SysTick_Handler
+#elif (configTICK_SOURCE == FREERTOS_USE_RTC)
+#define configSYSTICK_CLOCK_HZ (32768UL)
+#define xPortSysTickHandler RTC1_IRQHandler
+#else
+#error Unsupported configTICK_SOURCE value
+#endif
 
 /** Implementation note:  Use this with caution and set this to 1 ONLY for debugging
  * ----------------------------------------------------------
