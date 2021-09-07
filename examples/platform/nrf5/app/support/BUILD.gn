@@ -44,3 +44,12 @@ source_set("freertos_debugging_hooks") {
 
   public_deps = [ "${nrf5_sdk_build_root}:nrf5_sdk" ]
 }
+
+source_set("freertos_application_hooks") {
+  sources = [
+    "FreeRTOSApplicationHooks.c",
+    "FreeRTOSApplicationHooks.h",
+  ]
+
+  public_deps = [ "${nrf5_sdk_build_root}:nrf5_sdk" ]
+}
