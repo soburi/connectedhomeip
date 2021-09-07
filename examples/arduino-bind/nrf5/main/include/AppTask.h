@@ -50,14 +50,12 @@ private:
     void DispatchEvent(AppEvent * event);
 
     static void FunctionTimerEventHandler(AppEvent * aEvent);
-    static void ResetActionEventHandler(AppEvent * aEvent);
+    static void FunctionHandler(AppEvent * aEvent);
     static void JoinHandler(AppEvent * aEvent);
     static void LockActionEventHandler(AppEvent * aEvent);
 
     static void ButtonEventHandler(uint8_t pin_no, uint8_t button_action);
     static void TimerEventHandler(void * p_context);
-
-    static void UpdateClusterState(void);
 
     void StartTimer(uint32_t aTimeoutInMs);
 
@@ -71,7 +69,7 @@ private:
     } Function;
 
     Function_t mFunction;
-    bool mResetTimerActive;
+    bool mFunctionTimerActive;
 
     static AppTask sAppTask;
 };

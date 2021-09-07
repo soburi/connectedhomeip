@@ -121,7 +121,7 @@
 // ---- Lock Example App Config ----
 
 #define LOCK_BUTTON BUTTON_2
-#define RESET_BUTTON BUTTON_1
+#define FUNCTION_BUTTON BUTTON_1
 #define JOIN_BUTTON BUTTON_4
 #define FUNCTION_BUTTON_DEBOUNCE_PERIOD_MS 50
 
