@@ -73,8 +73,7 @@
 #define configUSE_NEWLIB_REENTRANT                               0
 #define configENABLE_BACKWARD_COMPATIBILITY                      1
 
-/*#define configSUPPORT_STATIC_ALLOCATION                          1
-*/
+#define configSUPPORT_STATIC_ALLOCATION                          1
 #define configSUPPORT_DYNAMIC_ALLOCATION                         1
 
 /* Hook function related definitions. */
@@ -103,9 +102,6 @@
 
 /* Tickless idle/low power functionality. */
 
-
-/* Debugging support. */
-#define configINCLUDE_FREERTOS_TASK_C_ADDITIONS_H 1
 
 /* Define to trap errors during development. */
 #if defined(DEBUG_NRF) || defined(DEBUG_NRF_USER)
