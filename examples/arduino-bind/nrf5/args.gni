@@ -19,6 +19,7 @@ import("${chip_root}/examples/platform/nrf5/args.gni")
 # SDK target. This is overriden to add our SDK app_config.h & defines.
 nrf5_sdk_target = get_label_info(":sdk", "label_no_toolchain")
 
+openthread_project_core_config_file = rebase_path("main/include/OpenThreadConfig.h")
 chip_mdns = "minimal"
 openthread_enable_core_config_args = true
 chip_inet_config_enable_raw_endpoint = true
