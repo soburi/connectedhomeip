@@ -26,15 +26,14 @@
 #include "AppTask.h"
 #include "FreeRTOS.h"
 
-BoltLockManager BoltLockManager::sLock;
-
 APP_TIMER_DEF(sLockTimer);
 
-int BoltLockManager::Init()
-{
-    ret_code_t ret;
 
-    ret = app_timer_create(&sLockTimer, APP_TIMER_MODE_SINGLE_SHOT, TimerEventHandler);
+BoltLockManager BoltLockManager::sLock;
+
+void BoltLockManager::Init()
+{
+    ret_code_t ret = app_timer_create(&sLockTimer, APP_TIMER_MODE_SINGLE_SHOT, TimerEventHandler);
     if (ret != NRF_SUCCESS)
     {
         NRF_LOG_INFO("app_timer_create() failed");
@@ -45,8 +44,6 @@ int BoltLockManager::Init()
     mAutoLockTimerArmed = false;
     mAutoRelock         = false;
     mAutoLockDuration   = 0;
-
-    return ret;
 }
 
 void BoltLockManager::SetCallbacks(Callback_fn_initiated aActionInitiated_CB, Callback_fn_completed aActionCompleted_CB)
@@ -84,14 +81,14 @@ bool BoltLockManager::InitiateAction(int32_t aActor, Action_t aAction)
     if (mState == kState_LockingCompleted && aAction == UNLOCK_ACTION)
     {
         action_initiated = true;
-
-        new_state = kState_UnlockingInitiated;
+        mCurrentActor    = aActor;
+        new_state        = kState_UnlockingInitiated;
     }
     else if (mState == kState_UnlockingCompleted && aAction == LOCK_ACTION)
     {
         action_initiated = true;
-
-        new_state = kState_LockingInitiated;
+        mCurrentActor    = aActor;
+        new_state        = kState_LockingInitiated;
     }
 
     if (action_initiated)
@@ -151,14 +148,7 @@ void BoltLockManager::TimerEventHandler(void * p_context)
     AppEvent event;
     event.Type               = AppEvent::kEventType_Timer;
     event.TimerEvent.Context = p_context;
-    if (lock->mAutoLockTimerArmed)
-    {
-        event.Handler = AutoReLockTimerEventHandler;
-    }
-    else
-    {
-        event.Handler = ActuatorMovementTimerEventHandler;
-    }
+    event.Handler            = lock->mAutoLockTimerArmed ? AutoReLockTimerEventHandler : ActuatorMovementTimerEventHandler;
     GetAppTask().PostEvent(&event);
 }
 
@@ -169,9 +159,7 @@ void BoltLockManager::AutoReLockTimerEventHandler(AppEvent * aEvent)
 
     // Make sure auto lock timer is still armed.
     if (!lock->mAutoLockTimerArmed)
-    {
         return;
-    }
 
     lock->mAutoLockTimerArmed = false;
 
@@ -201,7 +189,7 @@ void BoltLockManager::ActuatorMovementTimerEventHandler(AppEvent * aEvent)
     {
         if (lock->mActionCompleted_CB)
         {
-            lock->mActionCompleted_CB(actionCompleted);
+            lock->mActionCompleted_CB(actionCompleted, lock->mCurrentActor);
         }
 
         if (lock->mAutoRelock && actionCompleted == UNLOCK_ACTION)
