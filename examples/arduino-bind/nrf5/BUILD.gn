@@ -54,6 +54,9 @@ nrf5_sdk("sdk") {
 
   defines += [
     "USE_APP_CONFIG",
+    "MBEDTLS_PK_WRITE_C",
+    "MBEDTLS_X509_CREATE_C",
+    "MBEDTLS_X509_CSR_WRITE_C",
   ]
 }
 
@@ -87,6 +90,9 @@ nrf5_executable("arduino_bind") {
     "${chip_root}/src/setup_payload",
     "${chip_root}/third_party/openthread/platforms/nrf528xx:libnordicsemi_nrf52840_radio_driver_softdevice",
     "${chip_root}/third_party/openthread/platforms/nrf528xx:libopenthread-nrf52840-softdevice-sdk",
+    "${nrf5_platform_dir}/app/support:freertos_debugging_hooks",
+    "${nrf5_platform_dir}/app/support:freertos_newlib_lock_support",
+    "${nrf5_platform_dir}/app/support:freertos_newlib_lock_support_test",
     "${openthread_root}:libopenthread-cli-ftd",
     "${openthread_root}:libopenthread-ftd",
   ]
