@@ -35,9 +35,7 @@ nrf5_sdk("sdk") {
 
   sources = [
     "${nrf5_platform_dir}/app/project_include/CHIPProjectConfig.h",
-    "${nrf5_platform_dir}/app/project_include/FreeRTOSConfig.h",
     "${nrf5_platform_dir}/app/project_include/OpenThreadConfig.h",
-    "${nrf5_platform_dir}/app/project_include/freertos_tasks_c_additions.h",
     "${nrf5_platform_dir}/app/project_include/nrf_log_ctrl_internal.h",
     "main/include/app_config.h",
   ]
@@ -77,6 +75,8 @@ nrf5_executable("lock_app") {
     "main/include/AppEvent.h",
     "main/include/AppTask.h",
     "main/include/BoltLockManager.h",
+    "main/include/FreeRTOSConfig.h",
+    "main/include/freertos_tasks_c_additions.h",
     "main/main.cpp",
   ]
 
