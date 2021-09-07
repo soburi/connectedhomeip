@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import("//build_overrides/chip.gni")
-
 import("${chip_root}/examples/platform/nrf5/args.gni")
 
 # SDK target. This is overriden to add our SDK app_config.h & defines.

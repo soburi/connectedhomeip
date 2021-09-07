@@ -25,8 +25,6 @@
 #include <platform/internal/CHIPDeviceLayerInternal.h>
 #include <platform/nRF5/GroupKeyStoreImpl.h>
 
-#include "mem_manager.h"
-
 using namespace ::chip;
 using namespace ::chip::Profiles::Security::AppKeys;
 

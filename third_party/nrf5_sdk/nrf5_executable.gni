@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//build_overrides/build.gni")
 import("//build_overrides/chip.gni")
-import("//build/toolchain/flashable_executable.gni")
+
+import("${build_root}/toolchain/flashable_executable.gni")
 
 template("nrf5_executable") {
   objcopy_image_name = invoker.output_name + ".hex"
