@@ -52,7 +52,7 @@ extern "C" {
 #endif // NRF_LOG_ENABLED
 
 #include "chipinit.h"
-//#include "nrf5/app/support/FreeRTOSNewlibLockSupport_test.h"
+#include "nrf5/app/support/FreeRTOSNewlibLockSupport_test.h"
 #include <AppTask.h>
 #include <platform/CHIPDeviceLayer.h>
 
@@ -163,7 +163,7 @@ int main(void)
 
 #ifndef NDEBUG
     // TODO: Move this into a standalone test.
-    //freertos_newlib_lock_test();
+    freertos_newlib_lock_test();
 #endif
 
 #if defined(SOFTDEVICE_PRESENT) && SOFTDEVICE_PRESENT
@@ -242,17 +242,3 @@ int main(void)
     NRF_LOG_INFO("vTaskStartScheduler() failed");
     APP_ERROR_HANDLER(0);
 }
-
-#if OPENTHREAD_CONFIG_HEAP_EXTERNAL_ENABLE
-extern "C" {
-void *otPlatCAlloc(size_t aNum, size_t aSize)
-{
-    return calloc(aNum, aSize);
-}
-
-void otPlatFree(void *aPtr)
-{
-    free(aPtr);
-}
-}
-#endif

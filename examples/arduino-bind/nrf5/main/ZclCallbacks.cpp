@@ -43,14 +43,7 @@ void emberAfPostAttributeChangeCallback(EndpointId endpoint, ClusterId clusterId
         return;
     }
 
-    if (*value)
-    {
-        BoltLockMgr().InitiateAction(0, BoltLockManager::LOCK_ACTION);
-    }
-    else
-    {
-        BoltLockMgr().InitiateAction(0, BoltLockManager::UNLOCK_ACTION);
-    }
+    BoltLockMgr().InitiateAction(0, *value ? BoltLockManager::LOCK_ACTION : BoltLockManager::UNLOCK_ACTION);
 }
 
 /** @brief OnOff Cluster Init
@@ -70,5 +63,5 @@ void emberAfPostAttributeChangeCallback(EndpointId endpoint, ClusterId clusterId
  */
 void emberAfOnOffClusterInitCallback(EndpointId endpoint)
 {
-    // TODO: implement any additional On/off Cluster Server post init actions
+    //GetAppTask().UpdateClusterState();
 }
