@@ -27,6 +27,7 @@ cp -r third_party/connectedhomeip/.devcontainer dist/cores/nRF5/nordic/external/
 cp -r third_party/connectedhomeip/.github dist/cores/nRF5/nordic/external/connectedhomeip/
 cp -rfp  third_party/connectedhomeip/examples/platform/nrf5 dist/cores/nRF5/nordic/external/connectedhomeip/examples/platform/
 cp -rfp  third_party/connectedhomeip/examples/lock-app/lock-common dist/cores/nRF5/nordic/external/connectedhomeip/examples/lock-app/
+rm dist/cores/nRF5/nordic/external/connectedhomeip/examples/platform/nrf5/app/support/AltPrintf.c
 
 rm -r dist/cores/nRF5/nordic/external/connectedhomeip/src/platform/Darwin
 rm -r dist/cores/nRF5/nordic/external/connectedhomeip/src/platform/EFR32
