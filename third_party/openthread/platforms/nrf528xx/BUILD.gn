@@ -66,8 +66,20 @@ static_library("libopenthread-nrf52840-softdevice-sdk") {
   cflags = [ "-Wno-unused-but-set-variable" ]
 }
 
+declare_args() {
+  nrf528xx_spis_as_serial_transport = false
+  nrf528xx_usb_cdc_as_serial_transport = false
+  nrf528xx_uart_as_serial_transport = false
+}
+
 config("libopenthread-nrf52840-transport_config") {
-#  defines = [ "UART_AS_SERIAL_TRANSPORT=1" ]
+  if(nrf528xx_spis_as_serial_transport) {
+    defines = [ "SPIS_AS_SERIAL_TRANSPORT=1" ]
+  } else if(nrf528xx_usb_cdc_as_serial_transport) {
+    defines = [ "USB_CDC_AS_SERIAL_TRANSPORT=1" ]
+  } else if(nrf528xx_uart_as_serial_transport) {
+    defines = [ "UART_AS_SERIAL_TRANSPORT=1" ]
+  }
 }
 
 static_library("libopenthread-nrf52840-transport") {
