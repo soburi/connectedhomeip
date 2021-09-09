@@ -67,7 +67,7 @@ static_library("libopenthread-nrf52840-softdevice-sdk") {
 }
 
 config("libopenthread-nrf52840-transport_config") {
-  defines = [ "UART_AS_SERIAL_TRANSPORT=1" ]
+#  defines = [ "UART_AS_SERIAL_TRANSPORT=1" ]
 }
 
 static_library("libopenthread-nrf52840-transport") {
