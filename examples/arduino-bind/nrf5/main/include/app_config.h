@@ -44,6 +44,8 @@
 #define NRF_SDH_BLE_GATT_MAX_MTU_SIZE 251
 #define NRF_SDH_BLE_GAP_DATA_LENGTH 251
 
+#define NRF_SDH_DISPATCH_MODEL 2
+
 // ----- FDS / Flash Config -----
 
 #define FDS_ENABLED 1

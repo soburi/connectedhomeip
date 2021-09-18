@@ -5,11 +5,11 @@ mkdir -p dist/cores/nRF5/nordic/external/openthread/include
 mkdir -p dist/cores/nRF5/nordic/external/connectedhomeip/gen/
 mkdir -p dist/cores/nRF5/nordic/external/connectedhomeip/lib/
 mkdir -p dist/cores/nRF5/nordic/external/connectedhomeip/examples/platform/
-mkdir -p dist/cores/nRF5/nordic/external/connectedhomeip/examples/lock-app/
+mkdir -p dist/cores/nRF5/nordic/external/connectedhomeip/examples/arduino-bind/nrf5
 
 
-cp `find out/release/obj/third_party/connectedhomeip/src -name '*.a'` dist/cores/nRF5/nordic/external/connectedhomeip/lib/
-cp -rfp out/release/gen/include dist/cores/nRF5/nordic/external/connectedhomeip/gen/
+cp `find out/debug/obj/third_party/connectedhomeip/src -name '*.a'` dist/cores/nRF5/nordic/external/connectedhomeip/lib/
+cp -rfp out/debug/gen/include dist/cores/nRF5/nordic/external/connectedhomeip/gen/
 
 mv dist/cores/nRF5/nordic/external/connectedhomeip/gen/include/openthread*.h dist/cores/nRF5/nordic/external/openthread/include/
 #cp third_party/connectedhomeip/.* dist/cores/nRF5/nordic/external/connectedhomeip/
@@ -26,7 +26,10 @@ tar xf /tmp/hoge.tar -C dist/cores/nRF5/nordic/external/connectedhomeip/
 cp -r third_party/connectedhomeip/.devcontainer dist/cores/nRF5/nordic/external/connectedhomeip/
 cp -r third_party/connectedhomeip/.github dist/cores/nRF5/nordic/external/connectedhomeip/
 cp -rfp  third_party/connectedhomeip/examples/platform/nrf5 dist/cores/nRF5/nordic/external/connectedhomeip/examples/platform/
-cp -rfp  third_party/connectedhomeip/examples/lock-app/lock-common dist/cores/nRF5/nordic/external/connectedhomeip/examples/lock-app/
+cp -p  third_party/connectedhomeip/examples/arduino-bind/nrf5/* dist/cores/nRF5/nordic/external/connectedhomeip/examples/arduino-bind/nrf5/
+cp -rfp  third_party/connectedhomeip/examples/arduino-bind/nrf5/gen dist/cores/nRF5/nordic/external/connectedhomeip/examples/arduino-bind/nrf5/
+cp -rfp  third_party/connectedhomeip/examples/arduino-bind/nrf5/main dist/cores/nRF5/nordic/external/connectedhomeip/examples/arduino-bind/nrf5/
+
 rm dist/cores/nRF5/nordic/external/connectedhomeip/examples/platform/nrf5/app/support/AltPrintf.c
 
 rm -r dist/cores/nRF5/nordic/external/connectedhomeip/src/platform/Darwin
@@ -71,5 +74,5 @@ cp -rfp third_party/connectedhomeip/third_party/openthread/repo/examples/platfor
 cp -rfp third_party/connectedhomeip/third_party/openthread/repo/doc/ot_api_doc.h dist/cores/nRF5/nordic/external/openthread/include/openthread/
 cp -rfp third_party/connectedhomeip/third_party/openthread/repo/src/lib/spinel/*.h dist/cores/nRF5/nordic/external/openthread/include/spinel/
 cp -rfp third_party/connectedhomeip/third_party/openthread/repo/src/core/openthread-core-config.h dist/cores/nRF5/nordic/external/openthread/include/
-cp `find out/release -name 'libopenthread*.a'` dist/cores/nRF5/nordic/external/openthread/lib/nrf52840/gcc/
-cp `find out/release -name 'libnordic*.a'` dist/cores/nRF5/nordic/external/openthread/lib/nrf52840/gcc/
+cp `find out/debug -name 'libopenthread*.a'` dist/cores/nRF5/nordic/external/openthread/lib/nrf52840/gcc/
+cp `find out/debug -name 'libnordic*.a'` dist/cores/nRF5/nordic/external/openthread/lib/nrf52840/gcc/
