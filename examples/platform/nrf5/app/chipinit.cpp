@@ -47,31 +47,31 @@ extern "C" {
 #include <openthread/tasklet.h>
 #include <openthread/thread.h>
 #endif // CHIP_ENABLE_OPENTHREAD
-#include <core/CHIPError.h>
+#include <lib/core/CHIPError.h>
 #include <platform/CHIPDeviceLayer.h>
-#include <support/CHIPMem.h>
-#include <support/logging/CHIPLogging.h>
+#include <lib/support/CHIPMem.h>
+#include <lib/support/logging/CHIPLogging.h>
 
 using namespace ::chip;
 using namespace ::chip::DeviceLayer;
 
 ret_code_t ChipInit()
 {
-    ret_code_t ret = CHIP_NO_ERROR;
+    CHIP_ERROR ret = CHIP_NO_ERROR;
 
     NRF_LOG_INFO("Init CHIP stack");
     ret = chip::Platform::MemoryInit();
     if (ret != CHIP_NO_ERROR)
     {
         NRF_LOG_INFO("PlatformMgr().InitChipStack() failed");
-        APP_ERROR_HANDLER(ret);
+        APP_ERROR_HANDLER(ret.AsInteger());
     }
 
     ret = PlatformMgr().InitChipStack();
     if (ret != CHIP_NO_ERROR)
     {
         NRF_LOG_INFO("PlatformMgr().InitChipStack() failed");
-        APP_ERROR_HANDLER(ret);
+        APP_ERROR_HANDLER(ret.AsInteger());
     }
 
 #if CHIP_ENABLE_OPENTHREAD
@@ -91,7 +91,7 @@ ret_code_t ChipInit()
         if (retval != NRF_SUCCESS)
         {
             NRF_LOG_INFO("multiprotocol 15.4 failed");
-            APP_ERROR_HANDLER(CHIP_ERROR_INTERNAL);
+            APP_ERROR_HANDLER(retval);
         }
     }
 
@@ -99,14 +99,14 @@ ret_code_t ChipInit()
     if (ret != CHIP_NO_ERROR)
     {
         NRF_LOG_INFO("ThreadStackMgr().InitThreadStack() failed");
-        APP_ERROR_HANDLER(ret);
+        APP_ERROR_HANDLER(ret.AsInteger());
     }
 
     ret = ConnectivityMgr().SetThreadDeviceType(ConnectivityManager::kThreadDeviceType_Router);
     if (ret != CHIP_NO_ERROR)
     {
         NRF_LOG_INFO("ConnectivityMgr().SetThreadDeviceType() failed");
-        APP_ERROR_HANDLER(ret);
+        APP_ERROR_HANDLER(ret.AsInteger());
     }
 #endif // CHIP_ENABLE_OPENTHREAD
 
@@ -115,7 +115,7 @@ ret_code_t ChipInit()
     if (ret != CHIP_NO_ERROR)
     {
         NRF_LOG_INFO("PlatformMgr().StartEventLoopTask() failed");
-        APP_ERROR_HANDLER(ret);
+        APP_ERROR_HANDLER(ret.AsInteger());
     }
 
 #if CHIP_ENABLE_OPENTHREAD
@@ -126,9 +126,9 @@ ret_code_t ChipInit()
     if (ret != CHIP_NO_ERROR)
     {
         NRF_LOG_INFO("ThreadStackMgr().StartThreadTask() failed");
-        APP_ERROR_HANDLER(ret);
+        APP_ERROR_HANDLER(ret.AsInteger());
     }
 #endif // CHIP_ENABLE_OPENTHREAD
 
-    return ret;
+    return ret.AsInteger();
 }

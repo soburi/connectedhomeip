@@ -29,6 +29,7 @@ namespace Internal {
 
 void RegisterNRFErrorFormatter(void);
 bool FormatNRFError(char * buf, uint16_t bufSize, CHIP_ERROR err);
+inline CHIP_ERROR NRFErrorToCHIP_ERROR(ret_code_t err) { return CHIP_ERROR(CHIP_ERROR::Range::kPlatform, err); }
 
 } // namespace Internal
 } // namespace DeviceLayer

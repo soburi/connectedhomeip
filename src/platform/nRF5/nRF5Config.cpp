@@ -27,10 +27,10 @@
 
 #include <platform/nRF5/nRF5Config.h>
 
-#include <core/CHIPEncoding.h>
+#include <lib/core/CHIPEncoding.h>
 #include <platform/internal/testing/ConfigUnitTest.h>
-#include <support/CodeUtils.h>
-#include <support/logging/CHIPLogging.h>
+#include <lib/support/CodeUtils.h>
+#include <lib/support/logging/CHIPLogging.h>
 
 #include "FreeRTOS.h"
 #include "fds.h"
@@ -420,7 +420,7 @@ exit:
 #define CHIP_DEVICE_CONFIG_NRF5_FDS_ERROR_MIN 10000000
 CHIP_ERROR NRF5Config::MapFDSError(ret_code_t fdsRes)
 {
-    return (fdsRes == NRF_SUCCESS) ? CHIP_NO_ERROR : CHIP_DEVICE_CONFIG_NRF5_FDS_ERROR_MIN + fdsRes;
+    return (fdsRes == NRF_SUCCESS) ? CHIP_NO_ERROR : CHIP_ERROR(CHIP_DEVICE_CONFIG_NRF5_FDS_ERROR_MIN + fdsRes);
 }
 
 CHIP_ERROR NRF5Config::OpenRecord(NRF5Config::Key key, fds_record_desc_t & recDesc, fds_flash_record_t & rec)

@@ -49,9 +49,6 @@ nrf5_sdk("sdk") {
 
   defines += [
     "USE_APP_CONFIG",
-    "MBEDTLS_PK_WRITE_C",
-    "MBEDTLS_X509_CREATE_C",
-    "MBEDTLS_X509_CSR_WRITE_C",
   ]
 }
 

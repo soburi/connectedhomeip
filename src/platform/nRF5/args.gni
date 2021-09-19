@@ -23,14 +23,19 @@ lwip_platform = "nrf5"
 chip_inet_config_enable_ipv4 = false
 chip_inet_config_enable_dns_resolver = false
 
+chip_inet_config_enable_tcp_endpoint = false
+
 chip_build_tests = false
 
-mbedtls_target = "${chip_root}/third_party/nrf5_sdk"
+chip_mdns = "platform"
+
+mbedtls_target = "${chip_root}/third_party/nrf5_sdk:mbedtls"
 openthread_external_mbedtls = mbedtls_target
 
-openthread_project_core_config_file = "openthread-core-nrf52840-config.h"
+openthread_project_core_config_file = "OpenThreadConfig.h"
 openthread_core_config_platform_check_file =
     "openthread-core-nrf52840-config-check.h"
-openthread_core_config_deps = [ "${chip_root}/third_party/openthread/platforms/nrf528xx:openthread_core_config_nrf52840" ]
+openthread_core_config_deps = [ "${chip_root}/examples/platform/nrf5:openthread_core_config_nrf52840" ]
 
-openthread_external_platform = "${chip_root}/third_party/openthread/platforms/nrf528xx:libopenthread-nrf52840-softdevice-sdk"
+openthread_external_platform =
+    "${chip_root}/third_party/openthread/platforms/nrf528xx:libopenthread-nrf52840-softdevice-sdk"

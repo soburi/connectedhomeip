@@ -11,10 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import("//build_overrides/chip.gni")
 import("//build_overrides/jlink.gni")
 import("//build_overrides/nrf5_sdk.gni")
+import("//build_overrides/mbedtls.gni")
 import("//build_overrides/openthread.gni")
 
 declare_args() {
@@ -105,15 +105,6 @@ template("nrf5_sdk") {
     lib_dirs = [ "${nrf5_sdk_root}/modules/nrfx/mdk" ]
 
     libs = [
-      "${nrf5_sdk_root}/external/nrf_security/lib/libmbedcrypto_glue.a",
-      "${nrf5_sdk_root}/external/nrf_security/lib/libmbedcrypto_glue.a",
-      "${nrf5_sdk_root}/external/nrf_security/lib/libmbedcrypto_glue_cc310.a",
-      "${nrf5_sdk_root}/external/nrf_security/lib/libmbedcrypto_glue_vanilla.a",
-      "${nrf5_sdk_root}/external/nrf_security/lib/libmbedcrypto_cc310_backend.a",
-      "${nrf5_sdk_root}/external/nrf_security/lib/libmbedcrypto_vanilla_backend.a",
-      "${nrf5_sdk_root}/external/nrf_security/lib/libmbedtls_base_vanilla.a",
-      "${nrf5_sdk_root}/external/nrf_security/lib/libmbedtls_tls_vanilla.a",
-      "${nrf5_sdk_root}/external/nrf_security/lib/libmbedtls_x509_vanilla.a",
       "${nrf5_sdk_root}/external/nrf_security/lib/libnrf_cc310_platform_0.9.2.a",
     ]
 
@@ -129,8 +120,6 @@ template("nrf5_sdk") {
       "S140",
       "ENABLE_FEM",
       "FREERTOS",
-      "MBEDTLS_CONFIG_FILE=\"nrf-config.h\"",
-      "MBEDTLS_USER_CONFIG_FILE=\"nrf52840-mbedtls-config.h\"",
       "MULTIPROTOCOL_802154_CONFIG_PRESENT",
       "NRFX_PRS_ENABLED=0",
       "NRF_SD_BLE_API_VERSION=7",
@@ -260,8 +249,8 @@ template("nrf5_sdk") {
       "${nrf5_sdk_root}/components/softdevice/common/nrf_sdh.h",
       "${nrf5_sdk_root}/components/softdevice/common/nrf_sdh_ble.c",
       "${nrf5_sdk_root}/components/softdevice/common/nrf_sdh_ble.h",
-      "${nrf5_sdk_root}/components/softdevice/common/nrf_sdh_freertos.c",
-      "${nrf5_sdk_root}/components/softdevice/common/nrf_sdh_freertos.h",
+#      "${nrf5_sdk_root}/components/softdevice/common/nrf_sdh_freertos.c",
+#      "${nrf5_sdk_root}/components/softdevice/common/nrf_sdh_freertos.h",
       "${nrf5_sdk_root}/components/softdevice/common/nrf_sdh_soc.c",
       "${nrf5_sdk_root}/components/softdevice/common/nrf_sdh_soc.h",
       "${nrf5_sdk_root}/components/softdevice/s140/headers/ble.h",

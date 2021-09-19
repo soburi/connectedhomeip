@@ -15,10 +15,20 @@
 import("//build_overrides/chip.gni")
 import("//build_overrides/nrf5_sdk.gni")
 import("//build_overrides/openthread.gni")
+import("${chip_root}/third_party/nrf5_sdk/nrf5_sdk.gni")
 
 openthread_nrf528xx_root = "${chip_root}/third_party/openthread/ot-nrf528xx"
 
-import("${nrf5_sdk_build_root}/nrf5_sdk.gni")
+config("openthread_nrf5_config") {
+  include_dirs = [ "${openthread_nrf528xx_root}/openthread/src/core/" ]
+}
+
+source_set("openthread_mbedtls_config_nrf5") {
+  sources = [
+  ]
+
+  public_configs = [ ":openthread_nrf5_config" ]
+}
 
 # TODO(spang): Clean this up. We're mixing the vanilla Nordic SDK with forked
 # SDK code from OpenThread. See use_openthread_radio_driver below.

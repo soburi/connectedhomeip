@@ -29,8 +29,8 @@
 #include <ble/CHIPBleServiceData.h>
 #include <platform/internal/BLEManager.h>
 
-#include <support/CodeUtils.h>
-#include <support/logging/CHIPLogging.h>
+#include <lib/support/CodeUtils.h>
+#include <lib/support/logging/CHIPLogging.h>
 
 #include <type_traits>
 
@@ -63,6 +63,8 @@ extern "C" {
 #include "nrf_log_default_backends.h"
 #endif // NRF_LOG_ENABLED
 
+#include <platform/nRF5/nRF5Utils.h>
+
 using namespace chip::Ble;
 using namespace chip::System;
 
@@ -91,7 +93,7 @@ NRF_BLE_GATT_DEF(GATTModule);
 
 CHIP_ERROR RegisterVendorUUID(ble_uuid_t & uuid, const ble_uuid128_t & vendorUUID)
 {
-    CHIP_ERROR err;
+    ret_code_t err;
 
     err = sd_ble_uuid_vs_add(&vendorUUID, &uuid.type);
     SuccessOrExit(err);
@@ -101,7 +103,7 @@ CHIP_ERROR RegisterVendorUUID(ble_uuid_t & uuid, const ble_uuid128_t & vendorUUI
     uuid.uuid = static_cast<uint16_t>((((uint16_t) vendorUUID.uuid128[13]) << 8) | vendorUUID.uuid128[12]);
 
 exit:
-    return err;
+    return ::chip::DeviceLayer::Internal::NRFErrorToCHIP_ERROR(err);
 }
 
 } // unnamed namespace
@@ -148,7 +150,7 @@ CHIP_ERROR BLEManagerImpl::_Init()
     NRF_LOG_FLUSH();
 
     // Initialize the CHIP BleLayer.
-    err = BleLayer::Init(this, this, &SystemLayer);
+    err = BleLayer::Init(this, this, &SystemLayer());
     SuccessOrExit(err);
 
     // Initialize the Softdevice
@@ -165,7 +167,7 @@ CHIP_ERROR BLEManagerImpl::_Init()
     SuccessOrExit(err);
 
     // Add the CHIPoBLE service.
-    err = sd_ble_gatts_service_add(BLE_GATTS_SRVC_TYPE_PRIMARY, (ble_uuid_t *) &UUID_CHIPoBLEService, &svcHandle);
+    err = NRFErrorToCHIP_ERROR(sd_ble_gatts_service_add(BLE_GATTS_SRVC_TYPE_PRIMARY, (ble_uuid_t *) &UUID_CHIPoBLEService, &svcHandle));
     SuccessOrExit(err);
 
     // Add the CHIPoBLEChar_RX characteristic to the CHIPoBLE service.
@@ -180,7 +182,7 @@ CHIP_ERROR BLEManagerImpl::_Init()
     addCharParams.read_access              = SEC_OPEN;
     addCharParams.write_access             = SEC_OPEN;
     addCharParams.cccd_write_access        = SEC_NO_ACCESS;
-    err                                    = characteristic_add(svcHandle, &addCharParams, &mCHIPoBLECharHandle_RX);
+    err                                    = NRFErrorToCHIP_ERROR(characteristic_add(svcHandle, &addCharParams, &mCHIPoBLECharHandle_RX));
     SuccessOrExit(err);
 
     // Add the CHIPoBLEChar_TX characteristic.
@@ -195,16 +197,16 @@ CHIP_ERROR BLEManagerImpl::_Init()
     addCharParams.read_access         = SEC_OPEN;
     addCharParams.write_access        = SEC_OPEN;
     addCharParams.cccd_write_access   = SEC_OPEN;
-    err                               = characteristic_add(svcHandle, &addCharParams, &mCHIPoBLECharHandle_TX);
+    err                               = NRFErrorToCHIP_ERROR(characteristic_add(svcHandle, &addCharParams, &mCHIPoBLECharHandle_TX));
     SuccessOrExit(err);
 
     // Initialize the nRF5 GATT module and set the allowable GATT MTU and GAP packet sizes
     // based on compile-time config values.
-    err = nrf_ble_gatt_init(&GATTModule, NULL);
+    err = NRFErrorToCHIP_ERROR(nrf_ble_gatt_init(&GATTModule, NULL));
     SuccessOrExit(err);
-    err = nrf_ble_gatt_att_mtu_periph_set(&GATTModule, NRF_SDH_BLE_GATT_MAX_MTU_SIZE);
+    err = NRFErrorToCHIP_ERROR(nrf_ble_gatt_att_mtu_periph_set(&GATTModule, NRF_SDH_BLE_GATT_MAX_MTU_SIZE));
     SuccessOrExit(err);
-    err = nrf_ble_gatt_data_length_set(&GATTModule, BLE_CONN_HANDLE_INVALID, NRF_SDH_BLE_GAP_DATA_LENGTH);
+    err = NRFErrorToCHIP_ERROR(nrf_ble_gatt_data_length_set(&GATTModule, BLE_CONN_HANDLE_INVALID, NRF_SDH_BLE_GAP_DATA_LENGTH));
     SuccessOrExit(err);
 
     // Register a handler for BLE events.
@@ -293,7 +295,7 @@ CHIP_ERROR BLEManagerImpl::_GetDeviceName(char * buf, size_t bufSize)
     CHIP_ERROR err;
     uint16_t len = (uint16_t)(bufSize - 1);
 
-    err = sd_ble_gap_device_name_get((uint8_t *) buf, &len);
+    err = NRFErrorToCHIP_ERROR(sd_ble_gap_device_name_get((uint8_t *) buf, &len));
     SuccessOrExit(err);
 
     buf[len] = 0;
@@ -328,7 +330,7 @@ CHIP_ERROR BLEManagerImpl::_SetDeviceName(const char * devName)
     // Configure the device name within the BLE soft device.
     static_assert(CHAR_BIT == 8, "We're casting char to uint8_t");
     static_assert(sizeof(devNameBuf) < UINT16_MAX, "Our length might not fit in a uint16_t");
-    err = sd_ble_gap_device_name_set(&secMode, (const uint8_t *) devNameBuf, static_cast<uint16_t>(strlen(devNameBuf)));
+    err = NRFErrorToCHIP_ERROR(sd_ble_gap_device_name_set(&secMode, (const uint8_t *) devNameBuf, static_cast<uint16_t>(strlen(devNameBuf))));
     SuccessOrExit(err);
 
 exit:
@@ -397,7 +399,7 @@ bool BLEManagerImpl::CloseConnection(BLE_CONNECTION_OBJECT conId)
     ChipLogProgress(DeviceLayer, "Closing BLE GATT connection (con %u)", conId);
 
     // Initiate a GAP disconnect.
-    err = sd_ble_gap_disconnect(conId, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+    err = NRFErrorToCHIP_ERROR(sd_ble_gap_disconnect(conId, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION));
     if (err != CHIP_NO_ERROR)
     {
         ChipLogError(DeviceLayer, "sd_ble_gap_disconnect() failed: %s", ErrorStr(err));
@@ -430,7 +432,7 @@ bool BLEManagerImpl::SendIndication(BLE_CONNECTION_OBJECT conId, const ChipBleUU
     hvxParams.offset = 0;
     hvxParams.p_len  = &dataLen;
     hvxParams.p_data = data->Start();
-    err              = sd_ble_gatts_hvx(conId, &hvxParams);
+    err              = NRFErrorToCHIP_ERROR(sd_ble_gatts_hvx(conId, &hvxParams));
     SuccessOrExit(err);
 
 exit:
@@ -543,8 +545,8 @@ CHIP_ERROR BLEManagerImpl::StartAdvertising(void)
         // Ignore any error indicating that advertising is already stopped.  This case is arises
         // when a connection is established, which causes the SoftDevice to immediately cease
         // advertising.
-        err = sd_ble_gap_adv_stop(mAdvHandle);
-        if (err == NRF_ERROR_INVALID_STATE)
+        err = NRFErrorToCHIP_ERROR(sd_ble_gap_adv_stop(mAdvHandle));
+        if (err.IsRange(CHIP_ERROR::Range::kPlatform) && (err.GetValue() == NRF_ERROR_INVALID_STATE) )
         {
             err = CHIP_NO_ERROR;
         }
@@ -553,7 +555,7 @@ CHIP_ERROR BLEManagerImpl::StartAdvertising(void)
         // Force the SoftDevice to relinquish its references to the buffers containing the advertising
         // data.  This ensures the SoftDevice is not accessing these buffers while we are encoding
         // new advertising data into them.
-        err = sd_ble_gap_adv_set_configure(&mAdvHandle, NULL, NULL);
+        err = NRFErrorToCHIP_ERROR(sd_ble_gap_adv_set_configure(&mAdvHandle, NULL, NULL));
         SuccessOrExit(err);
     }
 
@@ -596,7 +598,7 @@ CHIP_ERROR BLEManagerImpl::StartAdvertising(void)
 
     // Configure an "advertising set" in the BLE soft device with the data and parameters for CHIP advertising.
     // If the advertising set doesn't exist, this call will create it and return its handle.
-    err = sd_ble_gap_adv_set_configure(&mAdvHandle, &gapAdvData, &gapAdvParams);
+    err = NRFErrorToCHIP_ERROR(sd_ble_gap_adv_set_configure(&mAdvHandle, &gapAdvData, &gapAdvParams));
     if (err != CHIP_NO_ERROR)
     {
         ChipLogError(DeviceLayer, "sd_ble_gap_adv_set_configure() failed: %s", ErrorStr(err));
@@ -604,7 +606,7 @@ CHIP_ERROR BLEManagerImpl::StartAdvertising(void)
     SuccessOrExit(err);
 
     // Instruct the BLE soft device to start advertising using the configured advertising set.
-    err = sd_ble_gap_adv_start(mAdvHandle, CHIP_DEVICE_LAYER_BLE_CONN_CFG_TAG);
+    err = NRFErrorToCHIP_ERROR(sd_ble_gap_adv_start(mAdvHandle, CHIP_DEVICE_LAYER_BLE_CONN_CFG_TAG));
     if (err != CHIP_NO_ERROR)
     {
         ChipLogError(DeviceLayer, "sd_ble_gap_adv_start() failed: %s", ErrorStr(err));
@@ -623,7 +625,7 @@ CHIP_ERROR BLEManagerImpl::StartAdvertising(void)
             ChipDeviceEvent advChange;
             advChange.Type                             = DeviceEventType::kCHIPoBLEAdvertisingChange;
             advChange.CHIPoBLEAdvertisingChange.Result = kActivity_Started;
-            PlatformMgr().PostEvent(&advChange);
+            err = PlatformMgr().PostEvent(&advChange);
         }
     }
 
@@ -642,8 +644,8 @@ CHIP_ERROR BLEManagerImpl::StopAdvertising(void)
     // Ignore any error indicating that advertising is already stopped.  This case is arises
     // when a connection is established, which causes the SoftDevice to immediately cease
     // advertising.
-    err = sd_ble_gap_adv_stop(mAdvHandle);
-    if (err == NRF_ERROR_INVALID_STATE)
+    err = NRFErrorToCHIP_ERROR(sd_ble_gap_adv_stop(mAdvHandle));
+    if (err.IsRange(CHIP_ERROR::Range::kPlatform) && (err.GetValue() == NRF_ERROR_INVALID_STATE) )
     {
         err = CHIP_NO_ERROR;
     }
@@ -659,7 +661,7 @@ CHIP_ERROR BLEManagerImpl::StopAdvertising(void)
             ChipDeviceEvent advChange;
             advChange.Type                             = DeviceEventType::kCHIPoBLEAdvertisingChange;
             advChange.CHIPoBLEAdvertisingChange.Result = kActivity_Stopped;
-            PlatformMgr().PostEvent(&advChange);
+            err = PlatformMgr().PostEvent(&advChange);
         }
     }
 
@@ -683,7 +685,7 @@ CHIP_ERROR BLEManagerImpl::EncodeAdvertisingData(ble_gap_adv_data_t & gapAdvData
     advData.uuids_complete.p_uuids  = (ble_uuid_t *) &UUID_CHIPoBLEService;
     gapAdvData.adv_data.p_data      = mAdvDataBuf;
     gapAdvData.adv_data.len         = sizeof(mAdvDataBuf);
-    err                             = ble_advdata_encode(&advData, mAdvDataBuf, &gapAdvData.adv_data.len);
+    err                             = NRFErrorToCHIP_ERROR(ble_advdata_encode(&advData, mAdvDataBuf, &gapAdvData.adv_data.len));
     SuccessOrExit(err);
 
     // Initialize the CHIP BLE Device Identification Information block that will be sent as payload
@@ -703,7 +705,7 @@ CHIP_ERROR BLEManagerImpl::EncodeAdvertisingData(ble_gap_adv_data_t & gapAdvData
     advData.service_data_count      = 1;
     gapAdvData.scan_rsp_data.p_data = mScanRespDataBuf;
     gapAdvData.scan_rsp_data.len    = sizeof(mScanRespDataBuf);
-    err                             = ble_advdata_encode(&advData, mScanRespDataBuf, &gapAdvData.scan_rsp_data.len);
+    err                             = NRFErrorToCHIP_ERROR(ble_advdata_encode(&advData, mScanRespDataBuf, &gapAdvData.scan_rsp_data.len));
     SuccessOrExit(err);
 
 exit:
@@ -749,26 +751,26 @@ void BLEManagerImpl::HandleSoftDeviceBLEEvent(const ChipDeviceEvent * event)
 
     case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
         // BLE Pairing not supported
-        err = sd_ble_gap_sec_params_reply(bleEvent->evt.gap_evt.conn_handle, BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP, NULL, NULL);
+        err = NRFErrorToCHIP_ERROR(sd_ble_gap_sec_params_reply(bleEvent->evt.gap_evt.conn_handle, BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP, NULL, NULL));
         SuccessOrExit(err);
         break;
 
     case BLE_GAP_EVT_PHY_UPDATE_REQUEST: {
         ChipLogDetail(DeviceLayer, "BLE GAP PHY update request (con %" PRIu16 ")", bleEvent->evt.gap_evt.conn_handle);
         const ble_gap_phys_t phys = { BLE_GAP_PHY_AUTO, BLE_GAP_PHY_AUTO };
-        err                       = sd_ble_gap_phy_update(bleEvent->evt.gap_evt.conn_handle, &phys);
+        err                       = NRFErrorToCHIP_ERROR(sd_ble_gap_phy_update(bleEvent->evt.gap_evt.conn_handle, &phys));
         SuccessOrExit(err);
         break;
     }
 
     case BLE_GATTS_EVT_SYS_ATTR_MISSING:
-        err = sd_ble_gatts_sys_attr_set(bleEvent->evt.gatts_evt.conn_handle, NULL, 0, 0);
+        err = NRFErrorToCHIP_ERROR(sd_ble_gatts_sys_attr_set(bleEvent->evt.gatts_evt.conn_handle, NULL, 0, 0));
         SuccessOrExit(err);
         break;
 
     case BLE_GATTS_EVT_TIMEOUT:
         ChipLogProgress(DeviceLayer, "BLE GATT Server timeout (con %" PRIu16 ")", bleEvent->evt.gatts_evt.conn_handle);
-        err = sd_ble_gap_disconnect(bleEvent->evt.gatts_evt.conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+        err = NRFErrorToCHIP_ERROR(sd_ble_gap_disconnect(bleEvent->evt.gatts_evt.conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION));
         SuccessOrExit(err);
         break;
 
@@ -1026,7 +1028,7 @@ CHIP_ERROR BLEManagerImpl::HandleTXCharCCCDWrite(const ChipDeviceEvent * event)
             {
                 ChipDeviceEvent conEstEvent;
                 conEstEvent.Type = DeviceEventType::kCHIPoBLEConnectionEstablished;
-                PlatformMgr().PostEvent(&conEstEvent);
+                err = PlatformMgr().PostEvent(&conEstEvent);
             }
         }
     }

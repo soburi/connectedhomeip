@@ -62,7 +62,7 @@ CHIP_ERROR PlatformEventing::DispatchEvents(System::Layer & aLayer)
     return CHIP_NO_ERROR;
 }
 
-CHIP_ERROR PlatformEventing::DispatchEvent(System::Layer & aLayer, const ChipDeviceEvent * aEvent)
+CHIP_ERROR PlatformEventing::DispatchEvent(System::Layer & aLayer, System::Event aEvent)
 {
     PlatformMgr().DispatchEvent(aEvent);
 

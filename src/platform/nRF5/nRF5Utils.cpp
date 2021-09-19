@@ -23,7 +23,7 @@
 
 #include <platform/internal/CHIPDeviceLayerInternal.h>
 #include <platform/nRF5/nRF5Utils.h>
-#include <support/ErrorStr.h>
+#include <lib/support/ErrorStr.h>
 
 namespace chip {
 namespace DeviceLayer {
@@ -59,12 +59,12 @@ bool FormatNRFError(char * buf, uint16_t bufSize, CHIP_ERROR err)
 {
     const char * subsys = NULL;
 
-    if (err >= CHIP_DEVICE_CONFIG_NRF5_ERROR_MIN && err <= CHIP_DEVICE_CONFIG_NRF5_ERROR_MAX)
+    if (err.AsInteger() >= CHIP_DEVICE_CONFIG_NRF5_ERROR_MIN && err.AsInteger() <= CHIP_DEVICE_CONFIG_NRF5_ERROR_MAX)
     {
         subsys = "nRF";
     }
 
-    else if (err >= CHIP_DEVICE_CONFIG_NRF5_FDS_ERROR_MIN && err <= CHIP_DEVICE_CONFIG_NRF5_FDS_ERROR_MAX)
+    else if (err.AsInteger() >= CHIP_DEVICE_CONFIG_NRF5_FDS_ERROR_MIN && err.AsInteger() <= CHIP_DEVICE_CONFIG_NRF5_FDS_ERROR_MAX)
     {
         subsys = "nRF-FDS";
     }
