@@ -51,15 +51,15 @@ ecdsa==0.16.1
     # via -r requirements.in
 filelock==3.0.12
     # via virtualenv
-flask-compress==1.9.0
-    # via gdbgui
-flask-socketio==2.9.6
-    # via gdbgui
 flask==0.12.5
     # via
     #   flask-compress
     #   flask-socketio
     #   gdbgui
+flask-compress==1.9.0
+    # via gdbgui
+flask-socketio==2.9.6
+    # via gdbgui
 future==0.18.2
     # via
     #   -r requirements.in
@@ -76,10 +76,10 @@ idna==2.10
     # via requests
 intelhex==2.3.0
     # via -r requirements.in
-ipython-genutils==0.2.0
-    # via traitlets
 ipython==7.21.0
     # via -r requirements.in
+ipython-genutils==0.2.0
+    # via traitlets
 itsdangerous==1.1.0
     # via flask
 jedi==0.18.0
@@ -92,7 +92,7 @@ markupsafe==1.1.1
     # via jinja2
 mobly==1.10.1
     # via -r requirements.in
-numpy==1.20.3
+numpy==1.22.0
     # via pandas
 packaging==20.9
     # via west
@@ -164,9 +164,7 @@ reedsolo==1.5.4
     # via -r requirements.in
 requests==2.25.1
     # via -r requirements.in
-ruamel.yaml.clib==0.2.2
-    # via ruamel.yaml
-ruamel.yaml==0.16.13
+ruamel-yaml==0.16.13
     # via pykwalify
 six==1.15.0
     # via
